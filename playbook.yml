@@ -16,7 +16,7 @@ job:
     password: 222222
     cmd: cd /root/ansible; ls -a
   - name: three
-    host: 192.168.126.333
+    host: ['192.168.126.333']
     user: root
     password: 333333
     cmd: cd /root/ansible; ls -a
@@ -24,12 +24,12 @@ job:
       echo "hello world 33333"
       pwd
   - name: four
-    host: 192.168.126.444
+    host: ['192.168.126.444']
     user: root
     password: 444444
     cmd: cd /root/ansible; ls -a
   - name: five
-    host: 192.168.126.555
+    host: ['192.168.126.555']
     user: root
     password: 555555
     cmd: cd /root/ansible; ls -a

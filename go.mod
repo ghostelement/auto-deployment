@@ -1,4 +1,4 @@
-module test
+module auto-deployment
 
 go 1.20
 

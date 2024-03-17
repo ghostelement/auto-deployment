@@ -9,14 +9,14 @@ import (
 	"path/filepath"
 
 	"github.com/fatih/color"
-	"github.com/kexin8/auto-deploy/deploy"
+	"auto-deployment/svc/deploy"
 	"github.com/kexin8/auto-deploy/log"
 	"github.com/urfave/cli/v2"
 )
 
 const (
-	defConfigName = "dyconfig.json"
-	url           = "https://github.com/kexin8/auto-deploy"
+	defConfigName = "playbook.yml"
+	url           = "https://gitee.com/ghostelement/auto-deployment"
 )
 
 var (
