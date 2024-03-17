@@ -8,8 +8,9 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/fatih/color"
 	"auto-deployment/svc/deploy"
+
+	"github.com/fatih/color"
 	"github.com/kexin8/auto-deploy/log"
 	"github.com/urfave/cli/v2"
 )

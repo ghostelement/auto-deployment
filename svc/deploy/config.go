@@ -13,19 +13,16 @@ type Playbook struct {
 }
 
 type Job struct {
-	JobName string `yaml:"name"`
-	//创建一个列表
-
-	Hosts       hosts  `yaml:"host"`
-	User        string `yaml:"user"`
-	Password    string `yaml:"password"`
-	ParallelNum int    `yaml:"parallelNum"`
-	SrcFile     string `yaml:"srcFile"`
-	DestDir     string `yaml:"destDir"`
-	Cmd         string `yaml:"cmd"`
-	Shell       string `yaml:"shell"`
+	JobName     string   `yaml:"name"`
+	Hosts       []string `yaml:"host"`
+	User        string   `yaml:"user"`
+	Password    string   `yaml:"password"`
+	ParallelNum int      `yaml:"parallelNum"`
+	SrcFile     string   `yaml:"srcFile"`
+	DestDir     string   `yaml:"destDir"`
+	Cmd         string   `yaml:"cmd"`
+	Shell       string   `yaml:"shell"`
 }
-type hosts []string
 
 // 解析yaml文件
 func Config(p string) (*Playbook, error) {
@@ -78,19 +75,20 @@ func (c *Job) Validate() error {
 }
 
 // ExampleConfig Config
+/*
 func ExampleConfig() *Playbook {
 	job := &Job{
-	    JobName: "init",
-	    Hosts:   hosts{"host1", "host2"},
-	    User:    "root",
-	    Password: "password",
-	    SrcFile: "/opt/exm.txt",
-		DestDir: "/opt/",
+		JobName:  "init",
+		Hosts:    hosts{"host1", "host2"},
+		User:     "root",
+		Password: "password",
+		SrcFile:  "/opt/exm.txt",
+		DestDir:  "/opt/",
 		Cmd:      "ls -l",
-		Shell:    "pwd"
+		Shell:    "pwd",
 	}
 	return &Playbook{
-		Jobs: []*Job{job}
+		Jobs: []*Job,
 	}
 }
 
@@ -109,3 +107,4 @@ func ExampleAllConfig() *Playbook {
 		PostCmd:       []string{"cmd1", "cmd2", "..."},
 	}
 }
+*/
