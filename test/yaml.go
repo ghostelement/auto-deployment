@@ -1,3 +1,4 @@
+// 测试yaml文件解析
 package main
 
 import (
@@ -12,14 +13,19 @@ func TestYaml(file string) {
 	}
 	for _, i := range text.Jobs {
 		fmt.Println("===========", i.JobName, "===========")
-		fmt.Println("host:  ", i.Hosts)
-		fmt.Println("user:  ", i.User)
-		fmt.Println("password:  ", i.Password)
-		fmt.Println("gorouting:  ", i.ParallelNum)
-		fmt.Println("srcFile:  ", i.SrcFile)
-		fmt.Println("destDir:  ", i.DestDir)
-		fmt.Println("cmd:  ", i.Cmd)
-		fmt.Println("shell:  ", i.Shell)
+		err := i.Validate()
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println("host:  ", i.Hosts)
+			fmt.Println("user:  ", i.User)
+			fmt.Println("password:  ", i.Password)
+			fmt.Println("gorouting:  ", i.ParallelNum)
+			fmt.Println("srcFile:  ", i.SrcFile)
+			fmt.Println("destDir:  ", i.DestDir)
+			fmt.Println("cmd:  ", i.Cmd)
+			fmt.Println("shell:  ", i.Shell)
+		}
 	}
 }
 

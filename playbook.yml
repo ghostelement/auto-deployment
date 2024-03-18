@@ -4,7 +4,7 @@ job:
     user: root
     password: 111111
     parallelNum: 5
-    srcFile: /data/test/1.sh
+    srcFile: ./playbook.yml
     destDir: /data/test
     cmd: cd /root/ansible; ls -a
     shell: |
@@ -14,6 +14,7 @@ job:
     host: ["192.168.126.222"]
     user: root
     password: 222222
+    srcFile: ./example
     cmd: cd /root/ansible; ls -a
   - name: three
     host: ["192.168.126.333"]

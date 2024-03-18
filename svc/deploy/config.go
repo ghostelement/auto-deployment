@@ -51,7 +51,7 @@ func (c *Playbook) GetJob(jobName string) (*Job, error) {
 
 // 验证配置文件
 func (c *Job) Validate() error {
-	if c.Hosts == nil {
+	if len(c.Hosts) == 0 {
 		return errors.New("address can't be empty")
 	}
 	if c.User == "" {
@@ -62,12 +62,14 @@ func (c *Job) Validate() error {
 	}
 
 	// check if the srcFiles exists
-	for _, filepath := range strings.Split(c.SrcFile, ",") {
-		if _, err := os.Stat(filepath); err != nil {
-			if os.IsNotExist(err) {
-				return errors.New(filepath + " not exists")
+	if c.SrcFile != "" {
+		for _, filepath := range strings.Split(c.SrcFile, ",") {
+			if _, err := os.Stat(filepath); err != nil {
+				if os.IsNotExist(err) {
+					return errors.New(filepath + " not exists")
+				}
+				return err
 			}
-			return err
 		}
 	}
 
