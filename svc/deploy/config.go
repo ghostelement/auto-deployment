@@ -52,7 +52,7 @@ func (c *Playbook) GetJob(jobName string) (*Job, error) {
 // 验证配置文件
 func (c *Job) Validate() error {
 	if len(c.Hosts) == 0 {
-		return errors.New("address can't be empty")
+		return errors.New("host can't be empty")
 	}
 	if c.User == "" {
 		return errors.New("username can't be empty")
@@ -76,37 +76,22 @@ func (c *Job) Validate() error {
 	return nil
 }
 
-// ExampleConfig Config
-/*
-func ExampleConfig() *Playbook {
-	job := &Job{
-		JobName:  "init",
-		Hosts:    hosts{"host1", "host2"},
-		User:     "root",
-		Password: "password",
-		SrcFile:  "/opt/exm.txt",
-		DestDir:  "/opt/",
-		Cmd:      "ls -l",
-		Shell:    "pwd",
-	}
-	return &Playbook{
-		Jobs: []*Job,
-	}
-}
+// ExampleConfig playbook
 
-// ExampleAllConfig Config
-func ExampleAllConfig() *Playbook {
+func ExampleConfig() *Playbook {
 	return &Playbook{
-		Addr:          "host1:port1,host2:port2,...",
-		User:          "username",
-		Pass:          "password",
-		PublicKey:     "ssh public key",
-		Timeout:       5,
-		SrcFile:       "file1,file2,...",
-		WorkDir:       "/path/to/remote/dir",
-		ChangeWorkDir: true,
-		PreCmd:        []string{"cmd1", "cmd2", "..."},
-		PostCmd:       []string{"cmd1", "cmd2", "..."},
+		Jobs: []Job{
+			{
+				JobName:     "init",
+				Hosts:       []string{"192.168.0.1:22", "192.168.0.2:22"},
+				User:        "root",
+				Password:    "yourpassword",
+				ParallelNum: 5,
+				SrcFile:     "file1,file2",
+				DestDir:     "/tmp",
+				Cmd:         "ls /tmp",
+				Shell:       "cd /tmp && ls",
+			},
+		},
 	}
 }
-*/

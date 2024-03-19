@@ -72,7 +72,7 @@ This is manually specifying the configuration file
 			}
 
 			//读取配置文件
-			config, err := deploy.NewConfig(profile)
+			config, err := deploy.Config(profile)
 			if err != nil {
 				return err
 			}
@@ -118,9 +118,9 @@ The specified application directory has been initially configured
 
 					//fmt.Println("appath:" + appath)
 
-					var config *deploy.Config
+					var config *deploy.Playbook
 					if isAllConfig {
-						config = deploy.ExampleAllConfig()
+						config = deploy.ExampleConfig()
 					} else {
 						config = deploy.ExampleConfig()
 					}
