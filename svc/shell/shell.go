@@ -1,14 +1,18 @@
 package shell
 
 import (
+	"auto-deployment/logger"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
-	"log"
+	"path"
+	"path/filepath"
+
 	"math/rand"
-	"nightowl/logger"
 	"os"
-	"os/exec"
+
 	"strings"
 
 	"github.com/pkg/sftp"
@@ -111,79 +115,43 @@ func (ss ShellRun) ReadAsyncShellLog(reader io.Reader, handler func(string)) err
 	}
 	return nil
 }
-func (ss ShellRun) RunAsyncShell(name string, args []string, handler LogAsyncHandle) error {
-	cmd := exec.Command(name, args...)
-	stdout, _ := cmd.StdoutPipe()
-	stderr, _ := cmd.StderrPipe()
-	if ss.WorkDir != "" {
-		cmd.Dir = ss.WorkDir
-	}
-
-	if err := cmd.Start(); err != nil {
-		logger.Error("Error starting command: %s......", err.Error())
-		return err
-	}
-
-	go ss.ReadAsyncShellLog(stdout, func(log string) {
-		if handler != nil {
-			handler(name, log)
-		}
-	})
-	go ss.ReadAsyncShellLog(stderr, func(log string) {
-		if handler != nil {
-			handler(name, log)
-		}
-	})
-	if err := cmd.Wait(); err != nil {
-		log.Printf("Error waiting for command execution: %s......", err.Error())
-		return err
-	}
-	return nil
-}
 
 type SshLoginHandle func(client ssh.Client)
 type SshLoginArgs struct {
-	Host string
-	Port uint32
-	User string
-	Pwd  string
+	Host     string
+	Port     uint32
+	User     string
+	Password string
 }
 
-func (ss ShellRun) SshLogin(args SshLoginArgs, sshLoginHandle SshLoginHandle) {
+func (ss ShellRun) SshLogin(args SshLoginArgs, sshLoginHandle SshLoginHandle) error {
 
 	//创建sshp登陆配置
 	config := &ssh.ClientConfig{
-		// Timeout:         30, //ssh 连接time out 时间一秒钟, 如果ssh验证错误 会在一秒内返回
+		//Timeout:         30, //ssh 连接time out 时间一秒钟, 如果ssh验证错误 会在一秒内返回
 		User:            args.User,
-		Auth:            []ssh.AuthMethod{ssh.Password(args.Pwd)},
+		Auth:            []ssh.AuthMethod{ssh.Password(args.Password)},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		// HostKeyCallback: ssh.InsecureIgnoreHostKey(), //这个可以, 但是不够安全
-		//HostKeyCallback: hostKeyCallBackFunc(h.Host),
 	}
 
 	// config.Auth = []ssh.AuthMethod{publicKeyAuthFunc(sshKeyPath)}
 
 	//dial 获取ssh client
-	addr := fmt.Sprintf("%s:%d", args.Host, args.Port)
-	logger.Debug(fmt.Sprintf("login %s@%s", args.User, addr))
-	sshClient, err := ssh.Dial("tcp", addr, config)
+	//addr := fmt.Sprintf("%s:%d", args.Host, args.Port)
+	logger.Debug(fmt.Sprintf("login %s@%s", args.User, args.Host))
+	sshClient, err := ssh.Dial("tcp", args.Host, config)
 	if err != nil {
 		logger.Error("create ssh client error:", err)
+		return err
 	}
 	defer sshClient.Close()
 
 	if sshLoginHandle != nil {
 		sshLoginHandle(*sshClient)
 	}
-
-	// //执行远程命令
-	// combo, err := session.CombinedOutput("whoami;uptime;df -h; free -m;top -bn 3 | grep 'Cpu'")
-	// if err != nil {
-	// 	log.Fatal("远程执行cmd 失败", err)
-	// }
-	// log.Println("命令输出:", string(combo))
+	return nil
 }
-func (ss ShellRun) RunWithSshSession(s ssh.Session, cmd string, args []string, handler LogAsyncHandle) error {
+func (ss ShellRun) RunWithSshSession(host string, s ssh.Session, cmd string, args []string, handler LogAsyncHandle) error {
 	stdout, _ := s.StdoutPipe()
 	stderr, _ := s.StderrPipe()
 	// if ss.WorkDir != ""{
@@ -198,12 +166,12 @@ func (ss ShellRun) RunWithSshSession(s ssh.Session, cmd string, args []string, h
 
 	go ss.ReadAsyncShellLog(stdout, func(log string) {
 		if handler != nil {
-			handler("", log)
+			handler(host, log)
 		}
 	})
 	go ss.ReadAsyncShellLog(stderr, func(log string) {
 		if handler != nil {
-			handler("", log)
+			handler(host, log)
 		}
 	})
 	if err := s.Wait(); err != nil {
@@ -212,9 +180,10 @@ func (ss ShellRun) RunWithSshSession(s ssh.Session, cmd string, args []string, h
 	}
 	return nil
 }
-func (ss ShellRun) SshLoginAndRun(sshArgs SshLoginArgs, cmd string, args []string, handler LogAsyncHandle) {
+func (ss ShellRun) SshLoginAndRun(sshArgs SshLoginArgs, cmd string, args []string, handler LogAsyncHandle) error {
 	r := rand.Intn(100)
-	ss.SshLogin(sshArgs, func(sshClient ssh.Client) {
+	err := ss.SshLogin(sshArgs, func(sshClient ssh.Client) {
+
 		// logger.Debug("args:", sshArgs)
 		//创建ssh-session
 		session, err := sshClient.NewSession()
@@ -222,88 +191,111 @@ func (ss ShellRun) SshLoginAndRun(sshArgs SshLoginArgs, cmd string, args []strin
 			logger.Error("create client session error:", err)
 		}
 		defer session.Close()
-		ss.RunWithSshSession(*session, cmd, args, handler)
+		ss.RunWithSshSession(sshArgs.Host, *session, cmd, args, handler)
 		logger.Debug("===RunWithSshSession-END:", r)
 	})
 	logger.Debug("===SshLoginAndRun-END:", r)
+	return err
 }
 
-func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string) {
-
+// sftp拷贝文件，保留源目录结构
+func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string) error {
 	logger.Debug("scp", src, dst)
-	ss.SshLogin(args, func(sshClient ssh.Client) {
+	err := ss.SshLogin(args, func(sshClient ssh.Client) {
+
 		sftp, err := sftp.NewClient(&sshClient)
 		if err != nil {
 			logger.Error("sftp.NewClient error:", err)
 			return
 		}
-		//
-		scpFile := func(s, d string) {
-			logger.Debug("scpFile", s, d)
-			sf, err := os.Open(s)
+
+		// sftp拷贝文件
+		scpFile := func(srcPath, dstPath string) {
+			logger.Debug("scpFile", srcPath, dstPath)
+
+			// 创建目标路径的上级目录
+			dirName := path.Dir(dstPath)
+			err = sftp.MkdirAll(dirName)
+			if err != nil {
+				logger.Error("sftp.MkdirAll error:", err)
+				return
+			}
+
+			sf, err := os.Open(srcPath)
 			if nil != err {
+				logger.Error("os.Open error:", err)
 				return
 			}
 			defer sf.Close()
-			a := strings.Split(d, "/")
-			err = sftp.MkdirAll(strings.Join(a[:len(a)-1], "/"))
 
-			dfi, err := sftp.Stat(d)
-			if nil == err && dfi.IsDir() {
-				a = strings.Split(s, "/")
-				d = fmt.Sprintf("%s/%s", d, a[len(a)-1])
+			// 检查远程文件是否存在并决定是否拷贝
+			if fileInfo, err := sftp.Stat(dstPath); err == nil {
+				if fileInfo.IsDir() {
+					logger.Debug("Destination is a directory, skipping copy:", dstPath)
+					return
+				} else {
+					// 如果目标已经存在且为文件，则不再拷贝
+					logger.Debug("File already exists on the remote server, skipping copy:", dstPath)
+					return
+				}
 			}
-			df, err := sftp.Create(d)
+
+			df, err := sftp.Create(dstPath)
 			if nil != err {
 				logger.Error("sftp.Create error:", err)
 				return
 			}
 			defer df.Close()
-			io.Copy(df, sf)
-		}
-		mkdir := func(d string) {
-			logger.Debug("sftp.mkdir:", d)
-			session, err := sshClient.NewSession()
-			if err != nil {
-				logger.Error("sshClient.NewSession error:", err)
-				return
-			}
-			defer session.Close()
-			err = ss.RunWithSshSession(*session, "mkdir", []string{"-p", d}, nil)
-			if err != nil {
-				logger.Error("RunWithSshSession error:", err)
-				return
 
+			// 使用缓冲区提高拷贝效率
+			buf := make([]byte, 1024*1024)
+			_, err = io.CopyBuffer(df, sf, buf)
+			if err != nil {
+				logger.Error("io.CopyBuffer error:", err)
 			}
 		}
-		var scp func(s, d string)
-		scp = func(s, d string) {
-			logger.Debug("scp(children) ", s, "->", d)
-			fi, err := os.Stat(s)
+		
+		var scp func(srcPath, dstBase string)
+		scp = func(srcPath, dstBase string) {
+			logger.Debug("scp(children) ", srcPath, "->", dstBase)
+			fi, err := os.Stat(srcPath)
+			
 			if err != nil {
 				logger.Error("os.Stat error:", err)
 				return
 			}
-			//如果是文件，复制文件
-			if !fi.IsDir() {
-				scpFile(s, d)
-				return
-			}
-			//如果是目录
-			files, err := ioutil.ReadDir(s) //读取目录下文件
+			// 如果是目录
+			if fi.IsDir() {
+				// 遍历目录下的所有元素
+				files, err := ioutil.ReadDir(srcPath)
+				if err != nil {
+					logger.Error("ioutil.ReadDir error:", err)
+					return
+				}
+				for _, file := range files {
+					srcChild := fmt.Sprintf("%s/%s", srcPath, file.Name())
+					dstChild := path.Join(dstBase, file.Name())
 
-			if err != nil {
-				logger.Error("ioutil.ReadDir error:", err)
-				return
-			}
-			//创建目标目录
-			mkdir(d)
-			for _, file := range files {
-				s2 := fmt.Sprintf("%s/%s", s, file.Name())
-				d2 := fmt.Sprintf("%s/%s", d, file.Name())
-				scp(s2, d2)
+					// 对于子目录，先创建子目录再递归处理
+					if file.IsDir() {
+						err = sftp.MkdirAll(dstChild)
+						if err != nil && !errors.Is(err, fs.ErrExist) {
+							logger.Error("sftp.Mkdir error:", err)
+							continue
+						}
+						scp(srcChild, dstChild)
+					} else {
+						// 对于文件，直接拷贝
+						scpFile(srcChild, dstChild)
+					}
+				}
+			} else {
+				// 是文件，计算完整的目标路径并拷贝
+				scpFile(srcPath, path.Join(dstBase, filepath.Base(srcPath)))
 			}
 		}
+		// 开始递归拷贝，初始目标路径为指定的目标目录
 		scp(src, dst)
 	})
+	return err
 }

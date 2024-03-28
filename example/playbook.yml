@@ -1,0 +1,15 @@
+job: 
+  - name: one
+    host: ['192.168.0.1:22', '192.168.0.2:22']
+    user: root
+    password: 'admin12345'
+    parallelNum: 5
+    srcFile: ./playbook.yml
+    destDir: /data/test
+    cmd: pwd;ls
+    shell: |
+      echo "hello world 111111"
+      cat > test.txt <<EOF
+      hello world
+      my host is here
+      EOF

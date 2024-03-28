@@ -1,8 +1,8 @@
 #!/bin/bash
 ################################################################
-# @Author: kexin8
-# @Date: 2023-06-27
-# @Description: install auto-deploy tool
+# @Author: Leon
+# @Date: 2024-03-20
+# @Description: install auto-deployment tool
 ################################################################
 
 function warn() {
@@ -26,8 +26,8 @@ function check() {
 }
 
 # 获取版本号
-VERSION=$(curl -s https://api.github.com/repos/kexin8/auto-deploy/releases/latest | grep tag_name | cut -d '"' -f 4)
-URL="https://github.com/kexin8/auto-deploy/releases/download/$VERSION"
+VERSION=$(curl -s https://gitee.com/ghostelement/auto-deployment/releases/latest | grep tag_name | cut -d '"' -f 4)
+URL="https://gitee.com/ghostelement/auto-deployment/releases/download/$VERSION"
 Proxy=$1
 
 if [ -n "$Proxy" ]; then
@@ -40,10 +40,10 @@ DEPLOY_DIR=""
 os=$(uname -s)
 if [ $os == "Darwin" ]; then
   os="darwin"
-  DEPLOY_DIR="$HOME/Applications/deploy"
+  DEPLOY_DIR="$HOME/Applications/autodeployment"
 elif [ $os == "Linux" ]; then
   os="linux"
-  DEPLOY_DIR="/usr/bin/deploy"
+  DEPLOY_DIR="/usr/bin/autodeployment"
 else
   error "不支持的系统 $os"
   exit 1
@@ -60,7 +60,7 @@ else
   exit 1
 fi
 
-DownloadUrl="$URL/deploy_"$os"_"$arch".tar.gz"
+DownloadUrl="$URL/autodeployment_"$os"_"$arch".tar.gz"
 info "download $DownloadUrl to $DEPLOY_DIR"
 
 tarFileTmpDir=$DEPLOY_DIR/tmp
@@ -79,10 +79,10 @@ curl $DownloadUrl | tar -zxf - -C $tarFileTmpDir
 check "download $DownloadUrl failed"
 
 # 复制文件到目标目录
-cp $tarFileTmpDir/deploy_"$os"_"$arch"/* $DEPLOY_DIR
+cp $tarFileTmpDir/autodeployment_"$os"_"$arch"/* $DEPLOY_DIR
 
 # 删除临时目录
-rm -rf $tarFileTmpDir
+rm -rf $tarFileTmpDir/autodeployment*
 
 # 获取当前系统的环境变量Path，判断是否已经存在，不存在则添加
 path=$(echo $PATH | grep $DEPLOY_DIR)

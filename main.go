@@ -1,19 +1,25 @@
 package main
 
 import (
-	"encoding/json"
+	"auto-deployment/svc/deploy"
+	"embed"
 	"fmt"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
 
-	"auto-deployment/svc/deploy"
+	"gopkg.in/yaml.v3"
 
 	"github.com/fatih/color"
-	"github.com/kexin8/auto-deploy/log"
+
 	"github.com/urfave/cli/v2"
 )
+
+//go:embed scripts/*
+var scripts embed.FS
+
+//引用scripts目录内脚本文件
 
 const (
 	defConfigName = "playbook.yml"
@@ -21,76 +27,85 @@ const (
 )
 
 var (
-	Version = "v0.0.0"
-	Os      = "windows"
+	Version = "v0.0.1"
+	Os      = "linux"
 	Arch    = "amd64"
 )
 
 func main() {
-
 	cli.VersionPrinter = func(ctx *cli.Context) {
 		fmt.Printf("deploy version %s %s/%s\r\n", ctx.App.Version, Os, Arch)
 	}
 
 	app := &cli.App{
-		Name: "deploy",
+		Name: "adp",
 		Description: `This is a simple cli app that automates deploy.
-e.g. This is a common way to perform deploy, according to dyconfig.json in the current path
-	deploy
+e.g. This is a common way to perform deploy, according to dyplaybook.yml in the current path
+	adp
 This is manually specifying the configuration file
-	deploy \path\to\config.json`,
+	adp /path/to/playbook.yml`,
 		Usage:     "this is a simple cli app that automates deploy",
-		UsageText: `deploy [\path\to\config.json]`,
+		UsageText: `adp [/path/to/playbook.yml]`,
 		Version:   Version,
 		Action: func(ctx *cli.Context) error {
-
-			// 进行版本检查，如果有新版本则提示更新
-			//latestVersion, err := deploy.GetLatestVersion()
-			//if err != nil {
-			//	// 不影响正常使用
-			//	log.ErrorF("check latest version failed: %s", err)
-			//}
-
-			//if latestVersion != "" && latestVersion != Version {
-			//	log.Info(color.YellowString("latest version %s is available, please update to the latest version: %s", latestVersion, url))
-			//}
-
-			// 仅提醒用户访问网址，不影响正常使用
-			log.Info(color.BlueString("please visit %s for the latest version", url))
-
-			profile := ctx.Args().First()
-			if profile == "" {
-				//检查当前目录是否存在配置文件 pdconfig.json
-				_, err := os.Stat(defConfigName)
-				if err != nil {
-					if os.IsNotExist(err) {
-						return fmt.Errorf("dyconfig.json does not exist, please use 'deploy init' to initialize")
-					}
-					return err
-				}
-				profile = defConfigName
-			}
-
-			//读取配置文件
-			config, err := deploy.Config(profile)
-			if err != nil {
-				return err
-			}
-			if err := deploy.Deploy(config); err != nil {
-				return err
-			}
+			// 网址
+			deploy.Info(color.BlueString("Thank you for your support. You can go to %s and give a star.", url))
+			cli.ShowAppHelp(ctx)
 			return nil
 		},
+		// adp命令行
 		Commands: []*cli.Command{
 			{
+				//adp run
+				Name: "run",
+				Description: `Run auto deployment from playbook
+		EXM: adp run
+Run auto deployment from your playbook
+		EXM: adp run /path/to/playbook.yml
+`,
+				UsageText: `adp run [/path/to/playbook.yml]`,
+				Action: func(ctx *cli.Context) (err error) {
+					profile := ctx.Args().First()
+					if profile == "" {
+						//检查当前目录是否存在配置文件 playbook.yml
+						_, err := os.Stat(defConfigName)
+						if err != nil {
+							if os.IsNotExist(err) {
+								return fmt.Errorf("playbook.yml does not exist, please use 'deploy init' to initialize")
+							}
+							return err
+						}
+						profile = defConfigName
+					}
+
+					//读取配置文件
+					config, err := deploy.Config(profile)
+					if err != nil {
+						return err
+					}
+
+					for _, job := range config.Jobs {
+						err := job.Validate()
+						if err != nil {
+							fmt.Println(err)
+						} else {
+							//执行任务
+							job.RunTask()
+						}
+					}
+					return nil
+				},
+			},
+			{
+				//adp init
 				Name: "init",
 				Description: `Initialize a new deploy configuration file.
 e.g. The usual way to config an app
-		deploy init
+		adp init
 The specified application directory has been initially configured
-		deploy init \path\to\app
+		adp init /path/to/app
 `,
-				UsageText: `deploy init [\path\to\app]`,
+				UsageText: `adp init [/path/to/app]`,
 				Flags: []cli.Flag{
 					&cli.BoolFlag{
 						Name:        "a",
@@ -104,18 +119,24 @@ The specified application directory has been initially configured
 
 					appath := ctx.Args().First()
 					if appath == "" {
-						//获取当前目录
-						dir, err := os.Getwd()
+						//获取程序所在目录
+						exePath, err := os.Executable()
 						if err != nil {
+							fmt.Println(err)
 							return err
 						}
-						appath = dir
+						dirPath := filepath.Dir(exePath)
+						fmt.Println("The exe path: ", dirPath)
+						appath = dirPath
 					}
 
 					if appath, err = filepath.Abs(appath); err != nil {
 						return err
 					}
 
+					//临时目录及脚本目录
+					scriptDir := appath + "/scripts"
+					tmpDir := appath + "/tmp/script"
 					//fmt.Println("appath:" + appath)
 
 					var config *deploy.Playbook
@@ -125,43 +146,33 @@ The specified application directory has been initially configured
 						config = deploy.ExampleConfig()
 					}
 
-					//写入配置文件
-					confjson, err := json.MarshalIndent(config, "", "\t")
+					//生成配置文件
+					confyaml, err := yaml.Marshal(config)
 					if err != nil {
 						return err
 					}
 
-					//写入文件
+					//写入配置文件
 					dpyconfig, err := os.Create(path.Join(appath, defConfigName))
 					if err != nil {
 						return err
 					}
+					//创建目录
+					if err := os.MkdirAll(scriptDir, 0755); err != nil {
+						return err
+					}
+					if err := os.MkdirAll(tmpDir, 0755); err != nil {
+						return err
+					}
+					//写入脚本文件
+					if err := CopyShellScriptToWorkingDir(scriptDir); err != nil {
+						return err
+					}
 					//goland:noinspection GoUnhandledErrorResult
 					defer dpyconfig.Close()
-					if _, err := io.WriteString(dpyconfig, string(confjson)); err != nil {
+					if _, err := io.WriteString(dpyconfig, string(confyaml)); err != nil {
 						return err
 					}
-
-					return nil
-				},
-			},
-			{
-				Name:  "upgrade",
-				Usage: "upgrade deploy",
-				Action: func(ctx *cli.Context) error {
-					latestVersion, err := deploy.GetLatestVersion()
-					if err != nil {
-						return err
-					}
-
-					if latestVersion == Version {
-						log.Info("deploy is already the latest version")
-						return nil
-					}
-
-					log.InfoF("latest  version: %s", latestVersion)
-					log.InfoF("current version: %s", Version)
-					log.Info(color.YellowString("latest version %s is available, please update to the latest version: %s", latestVersion, url))
 
 					return nil
 				},
@@ -170,7 +181,30 @@ The specified application directory has been initially configured
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		log.Error(err.Error())
+		deploy.Error(err.Error())
 		os.Exit(1)
 	}
+}
+
+// 拷贝scripts目录内脚本文件
+func CopyShellScriptToWorkingDir(destPath string) error {
+	files, err := scripts.ReadDir("scripts")
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		filename := file.Name()
+		fmt.Println("Write scripts: ", filename)
+		data, err := scripts.ReadFile("scripts/" + filename)
+		if err != nil {
+			return err
+		}
+		err = os.WriteFile(filepath.Join(destPath, filename), data, 0755)
+		if err != nil {
+			return err
+		}
+	}
+
+	return err
 }

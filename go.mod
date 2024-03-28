@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/fatih/color v1.15.0
-	github.com/kexin8/auto-deploy v1.2.0
 	github.com/pkg/sftp v1.13.5
 	github.com/urfave/cli/v2 v2.25.1
 	golang.org/x/crypto v0.8.0
@@ -20,6 +19,7 @@ require (
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
+	github.com/nsf/termbox-go v1.1.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/schollz/progressbar/v3 v3.13.1 // indirect

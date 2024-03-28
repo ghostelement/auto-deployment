@@ -1,36 +1,31 @@
 job: 
-  - name: one
-    host: ['192.168.126.111:22', '192.168.126.222:22']
-    user: root
-    password: 111111
-    parallelNum: 5
-    srcFile: ./playbook.yml
-    destDir: /data/test
-    cmd: cd /root/ansible; ls -a
-    shell: |
-      echo "hello world 111111"
-      pwd
+  #- name: one
+  #  host: ['192.168.0.1:22', '192.168.0.2:22']
+  #  user: root
+  #  password: 'admin12345'
+  #  parallelNum: 5
+  #  srcFile: ./playbook.yml
+  #  destDir: /data/test
+  #  cmd: pwd;ls
+  #  shell: |
+  #    echo "hello world 111111"
+  #    cat > test.txt <<EOF
+  #    hello world
+  #    my host is here
+  #    EOF
   - name: two
-    host: ["192.168.126.222"]
+    host: ["192.168.223.5:22"]
     user: root
-    password: 222222
-    srcFile: ./example
-    cmd: cd /root/ansible; ls -a
-  - name: three
-    host: ["192.168.126.333"]
-    user: root
-    password: 333333
-    cmd: cd /root/ansible; ls -a
-    shell: |
-      echo "hello world 33333"
-      pwd
-  - name: four
-    host: ["192.168.126.444"]
-    user: root
-    password: 444444
-    cmd: cd /root/ansible; ls -a
-  - name: five
-    host: ["192.168.126.555"]
-    user: root
-    password: 555555
-    cmd: cd /root/ansible; ls -a
+    password: 'leon1125'
+    srcFile: ./tmp
+    destDir: /data/test/example
+    cmd: cd /data/test/example; ls
+    shell: pwd
+  #- name: three
+  #  host: ["192.168.223.5:22"]
+  #  user: root
+  #  password: 'leon1125'
+  #  cmd: cd /data; ls -a
+  #  shell: |
+  #    echo "hello world 33333"
+  #    pwd
