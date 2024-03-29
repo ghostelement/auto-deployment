@@ -5,15 +5,15 @@
 # @Description: install auto-deployment tool
 ################################################################
 
-function warn() {
+function warn(){
   echo -e "\033[33m$1\033[0m"
 }
 
-function info() {
+function info(){
   echo $1
 }
 
-function error() {
+function error(){
   echo -e "\033[31m$1\033[0m"
 }
 
@@ -26,7 +26,9 @@ function check() {
 }
 
 # 获取版本号
-VERSION=$(curl -s https://gitee.com/ghostelement/auto-deployment/releases/latest | grep tag_name | cut -d '"' -f 4)
+VERSION=$(curl -s https://gitee.com/ghostelement/auto-deployment/releases/latest)
+VERSION=${VERSION##*tag/}
+VERSION=${VERSION%\">*}
 URL="https://gitee.com/ghostelement/auto-deployment/releases/download/$VERSION"
 Proxy=$1
 
@@ -75,20 +77,21 @@ fi
 
 # 解压至临时目录，避免覆盖
 info "download $DownloadUrl"
-curl $DownloadUrl | tar -zxf - -C $tarFileTmpDir
+wget $DownloadUrl
 check "download $DownloadUrl failed"
 
-# 复制文件到目标目录
-cp $tarFileTmpDir/autodeployment_"$os"_"$arch"/* $DEPLOY_DIR
-
-# 删除临时目录
-rm -rf $tarFileTmpDir/autodeployment*
+# 解压并复制文件到目标目录
+tar -zxvf autodeployment_"$os"_"$arch".tar.gz -C $tarFileTmpDir
+cp $tarFileTmpDir/adp  $DEPLOY_DIR
+chmod 755 $DEPLOY_DIR/adp
+# 删除临时文件
+rm -rf $tarFileTmpDir/adp
 
 # 获取当前系统的环境变量Path，判断是否已经存在，不存在则添加
 path=$(echo $PATH | grep $DEPLOY_DIR)
 if [ -z "$path" ]; then
-  info "export PATH=$DEPLOY_DIR:$PATH" >>~/.bash_profile
+  info "export PATH=$DEPLOY_DIR:$PATH" >>~/.bashrc
   # tips
-  warn "please run 'source ~/.bash_profile'"
+  warn "please run 'source ~/.bashrc'"
   warn "if you are using zsh, please run 'echo export PATH=$DEPLOY_DIR:'\$PATH' >> ~/.zshrc && source ~/.zshrc'"
 fi
