@@ -248,18 +248,18 @@ func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string) error {
 			defer df.Close()
 
 			// 使用缓冲区提高拷贝效率
-			buf := make([]byte, 1024*1024)
+			buf := make([]byte, 32*1024*1024)
 			_, err = io.CopyBuffer(df, sf, buf)
 			if err != nil {
 				logger.Error("io.CopyBuffer error:", err)
 			}
 		}
-		
+
 		var scp func(srcPath, dstBase string)
 		scp = func(srcPath, dstBase string) {
 			logger.Debug("scp(children) ", srcPath, "->", dstBase)
 			fi, err := os.Stat(srcPath)
-			
+
 			if err != nil {
 				logger.Error("os.Stat error:", err)
 				return
