@@ -119,24 +119,31 @@ The specified application directory has been initially configured
 
 					appath := ctx.Args().First()
 					if appath == "" {
-						//获取程序所在目录
-						exePath, err := os.Executable()
+						//获取程序所在目录,弃用此逻辑
+						//exePath, err := os.Executable()
+						//if err != nil {
+						//	fmt.Println(err)
+						//	return err
+						//}
+						//dirPath := filepath.Dir(exePath)
+						//fmt.Println("The exe path: ", dirPath)
+						//appath = dirPath
+
+						//获取当前目录
+						dir, err := os.Getwd()
 						if err != nil {
-							fmt.Println(err)
 							return err
 						}
-						dirPath := filepath.Dir(exePath)
-						fmt.Println("The exe path: ", dirPath)
-						appath = dirPath
+						appath = dir
 					}
 
 					if appath, err = filepath.Abs(appath); err != nil {
 						return err
 					}
 
-					//临时目录及脚本目录
+					//内置脚本目录
 					scriptDir := appath + "/scripts"
-					tmpDir := appath + "/tmp/script"
+					//tmpDir := appath + "/tmp/script"
 					//fmt.Println("appath:" + appath)
 
 					var config *deploy.Playbook
@@ -157,11 +164,12 @@ The specified application directory has been initially configured
 					if err != nil {
 						return err
 					}
-					//创建目录
+					//创建内置脚本目录
 					if err := os.MkdirAll(scriptDir, 0755); err != nil {
 						return err
 					}
-					if err := os.MkdirAll(tmpDir, 0755); err != nil {
+					//创建临时脚本目录
+					if err := os.MkdirAll(deploy.TmpShellDir, 0755); err != nil {
 						return err
 					}
 					//写入脚本文件

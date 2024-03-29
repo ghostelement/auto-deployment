@@ -22,7 +22,7 @@ var shellRun shell.ShellRun = shell.ShellRun{
 }
 
 // 本地临时脚本目录
-var tmpShellDir = "./tmp/script"
+var TmpShellDir = "/tmp/autodeployment/script"
 
 // 远程服务器临时脚本目录
 var remoteTmpShellDir = "/tmp/script"
@@ -78,7 +78,7 @@ func (task *Job) RunTask() {
 
 	// 创建临时脚本
 	if task.Shell != "" {
-		tmpShell, err = task.TmpShell(TaskID, tmpShellDir)
+		tmpShell, err = task.TmpShell(TaskID, TmpShellDir)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -120,8 +120,8 @@ func (task *Job) RunTask() {
 			if tmpShell != "" {
 				//shellSpinner.Start(fmt.Sprint("[", host, "]", " SHELL"))
 				// scp临时脚本到目标服务器
-				shellRun.Scp(sshArgs, (tmpShellDir + "/" + tmpShell), remoteTmpShellDir)
-				//shellRun.Scp(sshArgs, tmpShellDir, remoteTmpShellDir)
+				shellRun.Scp(sshArgs, (TmpShellDir + "/" + tmpShell), remoteTmpShellDir)
+				//shellRun.Scp(sshArgs, TmpShellDir, remoteTmpShellDir)
 				//切换远程临时脚本目录并执行临时脚本
 				errShell = shellRun.SshLoginAndRun(sshArgs, "cd "+remoteTmpShellDir+";bash", []string{"", tmpShell}, func(name, msg string) {
 					fmt.Printf("\n[[HOST]]>>[%s]:\n%s\n", name, msg)
