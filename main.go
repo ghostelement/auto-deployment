@@ -34,7 +34,7 @@ var (
 
 func main() {
 	cli.VersionPrinter = func(ctx *cli.Context) {
-		fmt.Printf("deploy version %s %s/%s\r\n", ctx.App.Version, Os, Arch)
+		fmt.Printf("autodeployment version %s %s/%s\r\n", ctx.App.Version, Os, Arch)
 	}
 
 	app := &cli.App{
@@ -43,9 +43,9 @@ func main() {
 e.g. This is a common way to perform deploy, according to dyplaybook.yml in the current path
 	adp
 This is manually specifying the configuration file
-	adp /path/to/playbook.yml`,
+	adp run /path/to/playbook.yml`,
 		Usage:     "this is a simple cli app that automates deploy",
-		UsageText: `adp [/path/to/playbook.yml]`,
+		UsageText: `adp run [/path/to/playbook.yml]`,
 		Version:   Version,
 		Action: func(ctx *cli.Context) error {
 			// 网址

@@ -1,10 +1,11 @@
 package test
 
 import (
-	"github.com/schollz/progressbar/v3"
 	"io"
 	"os"
 	"testing"
+
+	"github.com/schollz/progressbar/v3"
 )
 
 func TestBar(t *testing.T) {

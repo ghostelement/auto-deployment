@@ -2,10 +2,11 @@ package test
 
 import (
 	"fmt"
-	"github.com/urfave/cli/v2"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/urfave/cli/v2"
 )
 
 func TestCli(t *testing.T) {

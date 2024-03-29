@@ -45,7 +45,7 @@ if [ $os == "Darwin" ]; then
   DEPLOY_DIR="$HOME/Applications/autodeployment"
 elif [ $os == "Linux" ]; then
   os="linux"
-  DEPLOY_DIR="/usr/bin/autodeployment"
+  DEPLOY_DIR="/usr/bin"
 else
   error "不支持的系统 $os"
   exit 1
@@ -68,30 +68,39 @@ info "download $DownloadUrl to $DEPLOY_DIR"
 tarFileTmpDir=$DEPLOY_DIR/tmp
 
 # 创建临时目录，并判断是否有权限
-if [ -w $DEPLOY_DIR ]; then
-  mkdir -p $tarFileTmpDir
-else
-  warn "permission denied, auto change to sudo"
-  sudo mkdir -p $tarFileTmpDir
+if [ $os == "Darwin" ]; then
+  if [ -w $DEPLOY_DIR ]; then
+    mkdir -p $tarFileTmpDir
+  else
+    warn "permission denied, auto change to sudo"
+    sudo mkdir -p $tarFileTmpDir
+  fi
 fi
 
-# 解压至临时目录，避免覆盖
+# 下载文件
 info "download $DownloadUrl"
 wget $DownloadUrl
 check "download $DownloadUrl failed"
 
 # 解压并复制文件到目标目录
+if [ $os == "Darwin" ]; then
 tar -zxvf autodeployment_"$os"_"$arch".tar.gz -C $tarFileTmpDir
 cp $tarFileTmpDir/adp  $DEPLOY_DIR
 chmod 755 $DEPLOY_DIR/adp
 # 删除临时文件
 rm -rf $tarFileTmpDir/adp
+else
+tar -zxvf autodeployment_"$os"_"$arch".tar.gz
+cp adp $DEPLOY_DIR
+fi
 
 # 获取当前系统的环境变量Path，判断是否已经存在，不存在则添加
-path=$(echo $PATH | grep $DEPLOY_DIR)
-if [ -z "$path" ]; then
-  info "export PATH=$DEPLOY_DIR:$PATH" >>~/.bashrc
-  # tips
-  warn "please run 'source ~/.bashrc'"
-  warn "if you are using zsh, please run 'echo export PATH=$DEPLOY_DIR:'\$PATH' >> ~/.zshrc && source ~/.zshrc'"
+if [ $os == "Darwin" ]; then
+  path=$(echo $PATH | grep $DEPLOY_DIR)
+  if [ -z "$path" ]; then
+    info "export PATH=$DEPLOY_DIR:$PATH" >>~/.bash_profile
+    # tips
+    warn "please run 'source ~/.bash_profile'"
+    warn "if you are using zsh, please run 'echo export PATH=$DEPLOY_DIR:'\$PATH' >> ~/.zshrc && source ~/.zshrc'"
+  fi
 fi

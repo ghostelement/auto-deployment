@@ -1,11 +1,12 @@
 package test
 
 import (
+	"os"
+	"testing"
+
 	gssh "github.com/kexin8/auto-deploy/ssh"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
-	"os"
-	"testing"
 )
 
 const (

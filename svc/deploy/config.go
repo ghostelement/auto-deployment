@@ -82,15 +82,15 @@ func ExampleConfig() *Playbook {
 	return &Playbook{
 		Jobs: []Job{
 			{
-				JobName:     "init",
+				JobName:     "jobname",
 				Hosts:       []string{"192.168.0.1:22", "192.168.0.2:22"},
 				User:        "root",
 				Password:    "yourpassword",
 				ParallelNum: 5,
-				SrcFile:     "file1,file2",
+				SrcFile:     "filename or dirname",
 				DestDir:     "/tmp",
 				Cmd:         "ls /tmp",
-				Shell:       "cd /tmp && ls",
+				Shell:       "cd /tmp && pwd",
 			},
 		},
 	}
