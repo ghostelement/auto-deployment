@@ -40,7 +40,7 @@ func main() {
 	app := &cli.App{
 		Name: "adp",
 		Description: `This is a simple cli app that automates deploy.
-e.g. This is a common way to perform deploy, according to dyplaybook.yml in the current path
+e.g. This is a common way to perform deploy, according to playbook.yml in the current path
 	adp
 This is manually specifying the configuration file
 	adp run /path/to/playbook.yml`,
@@ -58,9 +58,9 @@ This is manually specifying the configuration file
 			{
 				//adp run
 				Name: "run",
-				Description: `Run auto deployment from playbook
+				Description: `Run auto deployment using default playbook
 		EXM: adp run
-Run auto deployment from your playbook
+Run auto deployment using your own playbook
 		EXM: adp run /path/to/playbook.yml
 `,
 				UsageText: `adp run [/path/to/playbook.yml]`,
