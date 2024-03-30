@@ -54,6 +54,7 @@ func (job *Job) TmpShell(uuid string, dir string) (string, error) {
 func (task *Job) RunTask() {
 	var wg sync.WaitGroup
 	var outputLock sync.Mutex
+	var timemutex sync.Mutex
 	var tmpShell string
 	var errScp error
 	var errShell error
@@ -128,13 +129,19 @@ func (task *Job) RunTask() {
 				})
 				//shellSpinner.Stop()
 			}
-			//计算任务耗时
+			//计算任务耗时,用互斥锁防止多个进程同时写入
+			timemutex.Lock()
 			deploytimes[host] = time.Since(startime)
 			sumtime += deploytimes[host]
+			timemutex.Unlock()
 			if err == nil && errShell == nil && errCmd == nil && errScp == nil {
+				timemutex.Lock()
 				deploystatus[host] = "SUCCESS"
+				timemutex.Unlock()
 			} else {
+				timemutex.Lock()
 				deploystatus[host] = "FAILED"
+				timemutex.Unlock()
 			}
 			<-jobChan
 		}(host)
