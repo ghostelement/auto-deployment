@@ -42,8 +42,18 @@ func CreateTaskID(jobname string) string {
 // 编写临时脚本，方便远程执行复杂shell
 func (job *Job) TmpShell(uuid string, dir string) (string, error) {
 	var err error
+	// 检查并创建目标目录（如果不存在）
+	if _, err = os.Stat(dir); os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			return "", fmt.Errorf("failed to create directory %s: %v", dir, err)
+		}
+	}
+	//临时脚本名
 	shellName := fmt.Sprintf("%s.sh", uuid)
+	//临时脚本路径
 	shell := fmt.Sprintf("%s/%s", dir, shellName)
+	//写入临时脚本
 	err = os.WriteFile(shell, []byte("#!/bin/bash\n"+job.Shell), 0755)
 	if err != nil {
 		fmt.Println("shell script write error: ", err)
