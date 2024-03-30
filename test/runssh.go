@@ -1,6 +1,7 @@
 package main
 
 import (
+	"auto-deployment/logger"
 	"auto-deployment/svc/deploy"
 	"fmt"
 )
@@ -26,7 +27,7 @@ func main() {
 
 		err := job.Validate()
 		if err != nil {
-			fmt.Println(err)
+			logger.Error("|Error playbook:", file, "|Error: ", err.Error())
 		} else {
 			/*
 				fmt.Println("host:  ", i.Hosts)

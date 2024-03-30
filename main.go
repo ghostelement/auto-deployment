@@ -1,6 +1,7 @@
 package main
 
 import (
+	"auto-deployment/logger"
 	"auto-deployment/svc/deploy"
 	"embed"
 	"fmt"
@@ -87,7 +88,7 @@ Run auto deployment using your own playbook
 					for _, job := range config.Jobs {
 						err := job.Validate()
 						if err != nil {
-							fmt.Println(err)
+							logger.Error("|Error playbook:", profile, "|Error: ", err.Error())
 						} else {
 							//执行任务
 							job.RunTask()
