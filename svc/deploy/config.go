@@ -17,11 +17,11 @@ type Job struct {
 	Hosts       []string `yaml:"host"`
 	User        string   `yaml:"user"`
 	Password    string   `yaml:"password"`
-	ParallelNum int      `yaml:"parallelNum"`
-	SrcFile     string   `yaml:"srcFile"`
-	DestDir     string   `yaml:"destDir"`
-	Cmd         string   `yaml:"cmd"`
-	Shell       string   `yaml:"shell"`
+	ParallelNum int      `yaml:"parallelNum,omitempty"`
+	SrcFile     string   `yaml:"srcFile,omitempty"`
+	DestDir     string   `yaml:"destDir,omitempty"`
+	Cmd         string   `yaml:"cmd,omitempty"`
+	Shell       string   `yaml:"shell,omitempty"`
 }
 
 // 解析yaml文件
@@ -51,6 +51,9 @@ func (c *Playbook) GetJob(jobName string) (*Job, error) {
 
 // 验证配置文件
 func (c *Job) Validate() error {
+	if c.JobName == "" {
+		return errors.New("job name can't be empty")
+	}
 	if len(c.Hosts) == 0 {
 		return errors.New("host can't be empty")
 	}
@@ -79,6 +82,24 @@ func (c *Job) Validate() error {
 // ExampleConfig playbook
 
 func ExampleConfig() *Playbook {
+	return &Playbook{
+		Jobs: []Job{
+			{
+				JobName:  "jobname",
+				Hosts:    []string{"192.168.0.1:22", "192.168.0.2:22"},
+				User:     "root",
+				Password: "yourpassword",
+				SrcFile:  "filename or dirname",
+				DestDir:  "/tmp",
+				Cmd:      "ls /tmp",
+			},
+		},
+	}
+}
+
+// ExampleAllConfig playbook
+
+func ExampleAllConfig() *Playbook {
 	return &Playbook{
 		Jobs: []Job{
 			{

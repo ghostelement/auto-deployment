@@ -148,7 +148,7 @@ The specified application directory has been initially configured
 
 					var config *deploy.Playbook
 					if isAllConfig {
-						config = deploy.ExampleConfig()
+						config = deploy.ExampleAllConfig()
 					} else {
 						config = deploy.ExampleConfig()
 					}
@@ -212,6 +212,7 @@ func CopyShellScriptToWorkingDir(destPath string) error {
 		if err != nil {
 			return err
 		}
+
 	}
 
 	return err
