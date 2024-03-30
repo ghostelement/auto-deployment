@@ -25,7 +25,7 @@ var shellRun shell.ShellRun = shell.ShellRun{
 var TmpShellDir = "/tmp/autodeployment/script"
 
 // 远程服务器临时脚本目录
-var remoteTmpShellDir = "/tmp/script"
+var remoteTmpShellDir = "/tmp/autodeployment/script"
 
 // 以任务名、时间、uuid生成任务id标识
 func CreateTaskID(jobname string) string {
@@ -115,6 +115,9 @@ func (task *Job) RunTask() {
 			}
 			//scp文件到远程服务器指定目录
 			if task.SrcFile != "" {
+				if task.DestDir == "" {
+					task.DestDir = remoteTmpShellDir
+				}
 				//scpSpinner.Start(fmt.Sprint("[", host, "]", " SCP"))
 				errScp = shellRun.Scp(sshArgs, task.SrcFile, task.DestDir)
 				//scpSpinner.Stop()
