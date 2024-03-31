@@ -26,10 +26,8 @@ function check() {
 }
 
 # 获取版本号
-VERSION=$(curl -s https://gitee.com/ghostelement/auto-deployment/releases/latest)
-VERSION=${VERSION##*tag/}
-VERSION=${VERSION%\">*}
-URL="https://gitee.com/ghostelement/auto-deployment/releases/download/$VERSION"
+VERSION=$(curl -s https://api.github.com/repos/ghostelement/auto-deployment/releases/latest | grep tag_name | cut -d '"' -f 4)
+URL="https://github.com/ghostelement/auto-deployment/releases/download/$VERSION"
 Proxy=$1
 
 if [ -n "$Proxy" ]; then

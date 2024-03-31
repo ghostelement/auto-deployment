@@ -27,7 +27,8 @@ func main() {
 
 		err := job.Validate()
 		if err != nil {
-			logger.Error("|Error playbook:", file, "|Error: ", err.Error())
+			//logger.Error("|Error playbook:", file, "|Error: ", err.Error())
+			logger.Error("Playbook: ", file, "|Error: ", err.Error())
 		} else {
 			/*
 				fmt.Println("host:  ", i.Hosts)
