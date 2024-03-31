@@ -30,16 +30,6 @@ func main() {
 			//logger.Error("|Error playbook:", file, "|Error: ", err.Error())
 			logger.Error("Playbook: ", file, "|Error: ", err.Error())
 		} else {
-			/*
-				fmt.Println("host:  ", i.Hosts)
-				fmt.Println("user:  ", i.User)
-				fmt.Println("password:  ", i.Password)
-				fmt.Println("gorouting:  ", i.ParallelNum)
-				fmt.Println("srcFile:  ", i.SrcFile)
-				fmt.Println("destDir:  ", i.DestDir)
-				fmt.Println("cmd:  ", i.Cmd)
-				fmt.Println("shell:  ", i.Shell)
-			*/
 			//执行任务
 			job.RunTask()
 		}
