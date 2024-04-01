@@ -98,7 +98,7 @@ job:
 ### run
 > Executing playbook
 
-Run `deploy` command to deploy program to server.
+Run `adp run` command to deploy program to server.
 The configuration file is located in the current directory. The default name is `playbook.yml`.
 
 **Example:**
