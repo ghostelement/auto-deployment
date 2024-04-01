@@ -9,9 +9,9 @@ builds:
       - windows
       - darwin
     goarch: [amd64, arm64]
-checksum:
-  name_template: 'checksums.txt'
-archives:
+#checksum:
+#  name_template: 'checksums.txt'
+#archives:
   #- replacements:
   #    linux: Linux
   #    windows: Windows
