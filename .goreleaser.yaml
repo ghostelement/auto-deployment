@@ -1,4 +1,8 @@
-project_name: rustdesk-api-server
+project_name: adp
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
 builds:
   - goos: # 编译平台列表 
       - linux
