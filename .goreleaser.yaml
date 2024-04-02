@@ -21,5 +21,5 @@ archives:
   - format_overrides:
       - goos: windows
         format: zip
-    #files: # 添加到压缩包内的文件列表
-    #  - README.md
+    files: # 添加到压缩包内的文件列表
+      - README.md
