@@ -292,7 +292,7 @@ function Install-Deploy
 
     $downloader = Get-Downloader
 
-    $deployZipFile = "$DEPLOY_DIR\deploy-windows-amd64.zip"
+    $deployZipFile = "$DEPLOY_DIR\adp_${VERSION}_windows_amd64.zip"
     # 创建目录
     if (!(Test-Path $DEPLOY_DIR))
     {
@@ -335,7 +335,7 @@ function Install-Deploy
 
 $VERSION = Invoke-WebRequest -Uri "https://api.github.com/repos/ghostelement/auto-deployment/releases/latest" -UseBasicParsing | ConvertFrom-Json | Select-Object -ExpandProperty tag_name
 
-$URL = "https://github.com/ghostelement/auto-deployment/releases/download/$VERSION/deploy_windows_x86_64.zip"
+$URL = "https://github.com/ghostelement/auto-deployment/releases/download/$VERSION/adp_${VERSION}_windows_amd64.zip"
 
 $DEPLOY_DIR = "$env:LOCALAPPDATA\deploy"
 

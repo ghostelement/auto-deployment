@@ -60,7 +60,7 @@ else
   exit 1
 fi
 
-DownloadUrl="$URL/autodeployment_"$os"_"$arch".tar.gz"
+DownloadUrl="$URL/adp_"$VERSION"_$os"_"$arch".tar.gz"
 info "download $DownloadUrl to $DEPLOY_DIR"
 
 tarFileTmpDir=$DEPLOY_DIR/tmp
@@ -82,13 +82,14 @@ check "download $DownloadUrl failed"
 
 # 解压并复制文件到目标目录
 if [ $os == "Darwin" ]; then
-tar -zxvf autodeployment_"$os"_"$arch".tar.gz -C $tarFileTmpDir
+tar -zxvf adp_"$VERSION"_"$os"_"$arch".tar.gz -C $tarFileTmpDir
 cp $tarFileTmpDir/adp  $DEPLOY_DIR
 chmod 755 $DEPLOY_DIR/adp
 # 删除临时文件
 rm -rf $tarFileTmpDir/adp
 else
-tar -zxvf autodeployment_"$os"_"$arch".tar.gz
+tar -zxvf adp_"$VERSION"_"$os"_"$arch".tar.gz
+chmod 755 adp
 cp adp $DEPLOY_DIR
 fi
 
