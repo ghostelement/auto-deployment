@@ -24,18 +24,16 @@ var scripts embed.FS
 
 const (
 	defConfigName = "playbook.yml"
-	url           = "https://gitee.com/ghostelement/auto-deployment"
+	url           = "https://github.com/ghostelement/auto-deployment"
 )
 
 var (
-	Version = "v0.0.2"
-	Os      = "linux"
-	Arch    = "amd64"
+	Version = "0.0.3"
 )
 
 func main() {
 	cli.VersionPrinter = func(ctx *cli.Context) {
-		fmt.Printf("autodeployment version %s %s/%s\r\n", ctx.App.Version, Os, Arch)
+		fmt.Printf("autodeployment version %s \r\n", ctx.App.Version)
 	}
 
 	app := &cli.App{

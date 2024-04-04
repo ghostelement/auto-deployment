@@ -52,29 +52,30 @@ curl -fsSL https://github.com/ghostelement/auto-deployment/releases/download/ins
 curl -fsSL https://ghproxy.com/https://github.com/ghostelement/auto-deployment/releases/download/install/install.sh | sh -s https://ghproxy.com
 ```
 
-### 手动下载(离线环境推荐)
+### 手动安装(离线环境推荐)
 
 #### Windows
 
 ##### PowerShell（推荐）
 ```shell
 # 下载
-wget https://github.com/ghostelement/auto-deployment/releases/download/{latest-version}/autodeployment_windows_amd64.tgz
+wget https://github.com/ghostelement/auto-deployment/releases/download/{latest-version}/autodeployment_{version}_windows_amd64.tgz
 
 # 解压
-tar -xvzf autodeployment-windows-amd64.tgz -C /your/path
+tar -xvzf autodeployment_{version}_windows_amd64.tgz -C /your/path
 # 设置环境变量
 [environment]::SetEnvironmentvariable("PATH", "$([environment]::GetEnvironmentvariable("Path", "User"));/your/path", "User")
+### 或者直接将手动解压出的adp.exe拷贝到/windows/system32目录下
 ```
 
 ##### Cmd
 
 ```shell
 # 下载
-wget https://github.com/ghostelement/auto-deployment/releases/download/{latest-version}/deploy_windows_amd64.tgz
+wget https://github.com/ghostelement/auto-deployment/releases/download/{version}/autodeployment_{version}_windows_amd64.tgz
 
 # 解压
-tar -xvzf deploy_windows_amd64.tgz -C /your/path
+tar -xvzf autodeployment_{version}_windows_amd64.tgz -C /your/path
 # 手动添加环境变量
 ```
 
@@ -84,19 +85,23 @@ tar -xvzf deploy_windows_amd64.tgz -C /your/path
 
 ```shell
 # 下载
-wget https://github.com/ghostelement/auto-deployment/releases/download/{latest-version}/autodeployment_linux_amd64.tgz
+wget https://github.com/ghostelement/auto-deployment/releases/download/{version}/autodeployment_{version}_linux_amd64.tgz
 # 解压
-tar -zxvf autodeployment_linux_amd64.tgz -C /your/path/
+tar -zxvf autodeployment_{version}_linux_amd64.tgz -C /your/path/
+chmod 755 /your/path/adp
 # 设置环境变量（追加）
 export PATH=$PATH:/your/path
+### 或者直接放到/usr/bin目录下，则不用添加环境变量
+sudo cp adp /usr/bin/
+sudo chmod 755 /usr/bin/adp
 ```
 
 ### Mac
 ```shell
 # 下载
-wget https://github.com/ghostelement/auto-deployment/releases/download/{latest-version}/autodeployment_darwin_amd64.tgz
+wget https://github.com/ghostelement/auto-deployment/releases/download/{version}/autodeployment_{version}_darwin_amd64.tgz
 # 解压
-tar -zxvf autodeployment_darwin_amd64.tgz -C /your/path/
+tar -zxvf autodeployment_{version}_darwin_amd64.tgz -C /your/path/
 # 设置环境变量
 export PATH=$PATH:/your/path
 ```
