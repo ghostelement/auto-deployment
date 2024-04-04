@@ -60,7 +60,7 @@ else
   exit 1
 fi
 
-DownloadUrl="$URL/adp_"$VERSION"_$os"_"$arch".tar.gz"
+DownloadUrl="$URL/adp_${VERSION}_${os}_${arch}.tar.gz"
 info "download $DownloadUrl to $DEPLOY_DIR"
 
 tarFileTmpDir=$DEPLOY_DIR/tmp
@@ -100,6 +100,6 @@ if [ $os == "Darwin" ]; then
     info "export PATH=$DEPLOY_DIR:$PATH" >>~/.bash_profile
     # tips
     warn "please run 'source ~/.bash_profile'"
-    warn "if you are using zsh, please run 'echo export PATH=$DEPLOY_DIR:'\$PATH' >> ~/.zshrc && source ~/.zshrc'"
+    warn "if you are using zsh, please run \"echo export PATH=$DEPLOY_DIR:'\$PATH' >> ~/.zshrc && source ~/.zshrc\""
   fi
 fi

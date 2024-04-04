@@ -50,7 +50,7 @@ This is manually specifying the configuration file
 		Version:   Version,
 		Action: func(ctx *cli.Context) error {
 			// 网址
-			deploy.Info(color.BlueString("Thank you for your support. You can go to %s and give a star.", url))
+			deploy.Info(color.BlueString("Thank's for your support. Please go to %s and give a star.", url))
 			cli.ShowAppHelp(ctx)
 			return nil
 		},

@@ -114,45 +114,6 @@ function Optimize-SecurityProtocol
     }
 }
 
-function Expand-ZipArchive {
-    param(
-        [String] $path,
-        [String] $to
-    )
-
-    if (!(Test-Path $path)) {
-        Deny-Install "Unzip failed: can't find $path to unzip."
-    }
-
-    # Check if the zip file is locked, by antivirus software for example
-    $retries = 0
-    while ($retries -le 10) {
-        if ($retries -eq 10) {
-            Deny-Install "Unzip failed: can't unzip because a process is locking the file."
-        }
-        if (Test-isFileLocked $path) {
-            Write-InstallInfo "Waiting for $path to be unlocked by another process... ($retries/10)"
-            $retries++
-            Start-Sleep -Seconds 2
-        } else {
-            break
-        }
-    }
-
-    # Workaround to suspend Expand-Archive verbose output,
-    # upstream issue: https://github.com/PowerShell/Microsoft.PowerShell.Archive/issues/98
-    $oldVerbosePreference = $VerbosePreference
-    $global:VerbosePreference = 'SilentlyContinue'
-
-    # Disable progress bar to gain performance
-    $oldProgressPreference = $ProgressPreference
-    $global:ProgressPreference = 'SilentlyContinue'
-
-    # PowerShell 5+: use Expand-Archive to extract zip files
-    Microsoft.PowerShell.Archive\Expand-Archive -Path $path -DestinationPath $to -Force
-    $global:VerbosePreference = $oldVerbosePreference
-    $global:ProgressPreference = $oldProgressPreference
-}
 
 function Get-Env
 {
@@ -287,7 +248,7 @@ function Install-Deploy
     # Enable TLS 1.2
     Optimize-SecurityProtocol
 
-    Write-InstallInfo "Installing Deploy..."
+    Write-InstallInfo "Installing Autodeployment..."
     Write-Verbose "$BaseUrl"
 
     $downloader = Get-Downloader
@@ -300,7 +261,7 @@ function Install-Deploy
     }
 
     # 输出deployTarFile
-    Write-InstallInfo "Downloading Deploy from $url to $deployZipFile ..."
+    Write-InstallInfo "Downloading Autodeployment from $url to $deployZipFile ..."
     $downloader.downloadFile($URL, $deployZipFile)
 
     Write-InstallInfo "Extracting ..."
@@ -312,18 +273,10 @@ function Install-Deploy
     }
     Write-Verbose "Extracting $deployZipFile to $deployUnzipTmpDir"
 
-    # 解压，如果解压失败，删除临时文件
-    #    tar -xzf $deployTarFile -C $deployUnTarFileTmpDir | Out-Null
-    Expand-ZipArchive $deployZipFile $deployUnzipTmpDir
-    if ($LastExitCode -ne 0)
-    {
-        Deny-Install "Failed to extract $deployZipFile to $deployUnzipTmpDir"
-        Remove-Item $deployZipFile -Force
-        Remove-Item $deployUnzipTmpDir -Force -Recurse
-        return
-    }
+    # 解压
+    Expand-Archive $deployZipFile $deployUnzipTmpDir
 
-    Copy-Item "$deployUnzipTmpDir\deploy_windows_x86_64\*" $DEPLOY_DIR -Recurse -Force
+    Copy-Item "$deployUnzipTmpDir\*" $DEPLOY_DIR -Recurse -Force
 
     # 删除临时文件
     Remove-Item $deployZipFile -Force
