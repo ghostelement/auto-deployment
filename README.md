@@ -1,6 +1,6 @@
 # AUTODEPLOYMENT
 ## Application Introduction
-This application is a simple command-line tool for automatic deployment in a Linux environment, written in Go.
+This application is a simple command-line tool for automatic deployment in a Linux environment, written in `Go 1.20.4`.
 Its primary function is to assist operations and implementation personnel in automating the process of "remote file copying" and "remote execution of shell scripts" through pre-written playbook.yml files during deployment. This facilitates rapid deployment and enhances the efficiency of the deployment process.  
 ## Usage
 By executing the `adp init` command, the configuration file is initialized, and an example playbook.yml file will be generated in the current directory. You can modify the playbook according to your needs and then execute the `adp run` command to perform the task.

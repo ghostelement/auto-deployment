@@ -1,6 +1,8 @@
 # Binaries for programs and plugins
+.gitignore
 auto-deployment
 adp
+test/*
 tmp/*
 *.exe
 *.exe~
