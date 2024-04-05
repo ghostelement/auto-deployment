@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-var file = "./playbook.yml"
+var file = "test/test.yml"
 
 /*
 	var shellRun shell.ShellRun = shell.ShellRun{

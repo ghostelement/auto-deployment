@@ -87,7 +87,7 @@ func Copy(src, dst string) error {
 
 func (ss ShellRun) ReadAsyncShellLog(reader io.Reader, handler func(string)) error {
 	var cache string = ""
-	buf := make([]byte, 1024, 1024)
+	buf := make([]byte, 8192, 8192)
 	for {
 		num, err := reader.Read(buf)
 		// logger.Debug("ReadAsyncShellLog:",num,err)
@@ -248,7 +248,7 @@ func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string) error {
 			defer df.Close()
 
 			// 使用缓冲区提高拷贝效率
-			buf := make([]byte, 32*1024*1024)
+			buf := make([]byte, 64*1024*1024)
 			_, err = io.CopyBuffer(df, sf, buf)
 			if err != nil {
 				logger.Error("io.CopyBuffer error:", err)
