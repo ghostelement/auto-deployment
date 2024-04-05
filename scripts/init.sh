@@ -672,8 +672,12 @@ network()
 
 menu(){
 ##关闭防火墙
-disable_selinux
-disable_firewall
+if [ -z "$1" ] || [ "$1" != "skipfw" ];then
+    disable_selinux
+    disable_firewall
+else
+    ${COLOR}"跳过防火墙设置,保持服务器原配置!"${END}
+fi
 ##配置ssh
 optimization_sshd
 #配置镜像源
@@ -699,7 +703,7 @@ set_localtime
 
 main(){
     os
-    menu
+    menu "$1"
 }
 
-main
+main "$1"
