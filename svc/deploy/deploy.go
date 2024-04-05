@@ -126,7 +126,7 @@ func (task *Job) RunTask() {
 			if task.Cmd != "" {
 				//cmdSpinner.Start(fmt.Sprint("[", host, "]", " CMD"))
 				errCmd = shellRun.SshLoginAndRun(sshArgs, task.Cmd, []string{"", ""}, func(name, msg string) {
-					fmt.Printf("\n[[HOST]]>>[%s]:\n%s\n", name, msg)
+					fmt.Printf("\n[[HOST CMD]]>>[%s]:\n%s\n", name, msg)
 				})
 				//cmdSpinner.Stop()
 			}
@@ -138,7 +138,7 @@ func (task *Job) RunTask() {
 				//shellRun.Scp(sshArgs, TmpShellDir, remoteTmpShellDir)
 				//切换远程临时脚本目录并执行临时脚本
 				errShell = shellRun.SshLoginAndRun(sshArgs, "cd "+remoteTmpShellDir+";bash", []string{"", tmpShell}, func(name, msg string) {
-					fmt.Printf("\n[[HOST]]>>[%s]:\n%s\n", name, msg)
+					fmt.Printf("\n[[HOST SHELL]]>>[%s]:\n%s\n", name, msg)
 				})
 				//shellSpinner.Stop()
 			}
