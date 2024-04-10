@@ -21,7 +21,7 @@ var shellRun shell.ShellRun = shell.ShellRun{
 	WorkDir: "/tmp",
 }
 
-// 本地临时脚本目录
+// 本地生成临时脚本目录
 var TmpShellDir = "/tmp/autodeployment/script"
 
 // 远程服务器临时脚本目录
@@ -61,6 +61,9 @@ func (job *Job) TmpShell(uuid string, dir string) (string, error) {
 	return shellName, err
 
 }
+
+// 按照任务清单执行任务
+// 执行顺序：SCP远程拷贝文件 -> 执行CMD命令 -> 执行SHELL命令
 func (task *Job) RunTask() {
 	var wg sync.WaitGroup
 	var outputLock sync.Mutex

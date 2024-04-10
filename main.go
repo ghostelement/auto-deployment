@@ -28,7 +28,7 @@ const (
 )
 
 var (
-	Version = "0.0.3"
+	Version = "0.0.4"
 )
 
 func main() {
@@ -83,6 +83,7 @@ Run auto deployment using your own playbook
 						return err
 					}
 
+					//验证job任务字段是否合规并执行任务
 					for _, job := range config.Jobs {
 						err := job.Validate()
 						if err != nil {
@@ -142,8 +143,6 @@ The specified application directory has been initially configured
 
 					//内置脚本目录
 					scriptDir := appath + "/scripts"
-					//tmpDir := appath + "/tmp/script"
-					//fmt.Println("appath:" + appath)
 
 					var config *deploy.Playbook
 					if isAllConfig {

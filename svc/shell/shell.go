@@ -33,58 +33,11 @@ func If(cond bool, a, b interface{}) interface{} {
 	}
 	return b
 }
-func CopyFile(s, d string) {
-	s2, err := os.Open(s)
-	if err != nil {
-		fmt.Sprintf("copy file src error:%s", err)
-		return
-	}
-	d2, err := os.OpenFile(d, os.O_WRONLY|os.O_CREATE, DefaultFileMode)
-	if err != nil {
-		fmt.Sprintf("copy file dst error:%s", err)
-		return
-	}
-	defer s2.Close()
-	defer d2.Close()
-	io.Copy(d2, s2)
-}
 
-func Copy(src, dst string) error {
-	var cp func(string, string)
-	cp = func(s, d string) {
-		fmt.Printf("cp %s -> %s\n", s, d)
-		fi, err := os.Stat(s)
-		if err != nil {
-			fmt.Printf("err:\n", err)
-			return
-		}
-		//如果是文件，复制文件
-		if !fi.IsDir() {
-			CopyFile(s, d)
-			return
-		}
-		//如果是目录
-		files, err := ioutil.ReadDir(s) //读取目录下文件
-		if err != nil {
-			fmt.Printf("err:\n", err)
-			return
-		}
-		//创建目标目录
-		err = os.MkdirAll(d, DefaultFileMode)
-		if err != nil {
-			fmt.Printf("err:\n", err)
-			return
-		}
-		for _, file := range files {
-			s2 := fmt.Sprintf("%s/%s", s, file.Name())
-			d2 := fmt.Sprintf("%s/%s", d, file.Name())
-			cp(s2, d2)
-		}
-	}
-	cp(src, dst)
-	return nil
-}
-
+// ReadAsyncShellLog 从给定的reader中异步读取shell日志，并通过handler处理每一行。
+// reader: 用于读取日志的io.Reader接口。
+// handler: 当读取到一行日志时调用的处理函数，每一行日志（包括最后一行，如果它不完整）都会被传递给这个函数。
+// 返回值表示读取过程中遇到的任何错误。
 func (ss ShellRun) ReadAsyncShellLog(reader io.Reader, handler func(string)) error {
 	var cache string = ""
 	buf := make([]byte, 8192, 8192)
@@ -96,17 +49,19 @@ func (ss ShellRun) ReadAsyncShellLog(reader io.Reader, handler func(string)) err
 
 				handler(cache)
 			}
+			// 如果错误为EOF或包含"closed"，则将其重置为nil，表示读取完成
 			if err == io.EOF || strings.Contains(err.Error(), "closed") {
 				err = nil
 			}
 			return err
 		}
+		// 如果成功读取到数据
 		if num > 0 {
-			d := buf[:num]
-			// d,_ = simplifiedchinese.GB18030.NewDecoder().Bytes(d)
-			a := strings.Split(string(d), "\n")
+			d := buf[:num]                      // 获取实际读取到的数据
+			a := strings.Split(string(d), "\n") // 按行分割数据
 			line := strings.Join(a[:len(a)-1], "\n")
 			if handler != nil {
+				// 调用handler处理每一行完整的日志（包括之前的缓存）
 				handler(fmt.Sprintf("%s%s\n", cache, line))
 			}
 			// fmt.Printf("|%s%s\n", cache, line)
@@ -151,37 +106,61 @@ func (ss ShellRun) SshLogin(args SshLoginArgs, sshLoginHandle SshLoginHandle) er
 	}
 	return nil
 }
+
+// RunWithSshSession 通过ssh会话在指定主机上运行命令。
+//
+// 参数:
+// host - 主机地址，用于日志记录。
+// s - ssh.Session对象，用于执行远程命令。
+// cmd - 要执行的命令。
+// args - 命令的参数数组。
+// handler - 异步日志处理函数，用于处理命令输出的日志。
+//
+// 返回值:
+// 返回执行过程中可能出现的错误。
 func (ss ShellRun) RunWithSshSession(host string, s ssh.Session, cmd string, args []string, handler LogAsyncHandle) error {
 	stdout, _ := s.StdoutPipe()
 	stderr, _ := s.StderrPipe()
 	// if ss.WorkDir != ""{
 	// 	cmd.Dir = ss.WorkDir
 	// }
+	// 构建要执行的完整命令字符串
 	cmds := fmt.Sprintf("%s %s", cmd, strings.Join(args, " "))
-	// cmds = "ifconfig"
+
 	if err := s.Start(cmds); err != nil {
 		logger.Error("|run cmd:", cmds, "|error: ", err.Error())
 		return err
 	}
 
+	// 异步读取命令的标准输出，并通过handler处理
 	go ss.ReadAsyncShellLog(stdout, func(log string) {
 		if handler != nil {
 			handler(host, log)
 		}
 	})
+	// 异步读取命令的标准错误，并通过handler处理
 	go ss.ReadAsyncShellLog(stderr, func(log string) {
 		if handler != nil {
 			handler(host, log)
 		}
 	})
+	// 等待命令执行完成，如有错误则记录并返回
 	if err := s.Wait(); err != nil {
 		logger.Error("Error waiting for command:", cmds, "|error:", err.Error())
 		return err
 	}
 	return nil
 }
+
+// SshLoginAndRun 通过SSH登录并执行命令
+// sshArgs: 包含SSH登录所需参数，如用户名、密码、主机地址等
+// cmd: 需要在远程主机上执行的命令
+// args: 命令的参数数组
+// handler: 日志异步处理函数，用于处理执行命令时的日志
+// 返回值: 执行过程中可能出现的错误
 func (ss ShellRun) SshLoginAndRun(sshArgs SshLoginArgs, cmd string, args []string, handler LogAsyncHandle) error {
-	r := rand.Intn(100)
+	r := rand.Intn(100) //TODO:后期需改为uuid 随机生成一个数字，用于日志标识
+	// 尝试通过sshArgs进行SSH登录，并在登录成功后执行相应的操作
 	err := ss.SshLogin(sshArgs, func(sshClient ssh.Client) {
 
 		// logger.Debug("args:", sshArgs)
@@ -191,6 +170,7 @@ func (ss ShellRun) SshLoginAndRun(sshArgs SshLoginArgs, cmd string, args []strin
 			logger.Error("create client session error:", err)
 		}
 		defer session.Close()
+		// 使用创建的SSH会话执行命令
 		ss.RunWithSshSession(sshArgs.Host, *session, cmd, args, handler)
 		logger.Debug("===RunWithSshSession-END:", r)
 	})
@@ -220,7 +200,7 @@ func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string) error {
 				logger.Error("sftp.MkdirAll error:", err)
 				return
 			}
-
+			// 打开源文件并准备读取
 			sf, err := os.Open(srcPath)
 			if nil != err {
 				logger.Error("os.Open error:", err)
@@ -239,7 +219,7 @@ func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string) error {
 					return
 				}
 			}
-
+			//使用sftp创建目标文件
 			df, err := sftp.Create(dstPath)
 			if nil != err {
 				logger.Error("sftp.Create error:", err)
@@ -255,6 +235,7 @@ func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string) error {
 			}
 		}
 
+		//根据传入参数处理scp逻辑
 		var scp func(srcPath, dstBase string)
 		scp = func(srcPath, dstBase string) {
 			logger.Debug("scp(children) ", srcPath, "->", dstBase)

@@ -59,6 +59,7 @@ func NewStepSpinner(outputLock *sync.Mutex) *StepSpinner {
 	}
 }
 
+// 任务执行动画格式
 func (ss *StepSpinner) Start(stepName string) {
 	go func() {
 		frames := []string{"-", "\\", "|", "/"}
