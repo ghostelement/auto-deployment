@@ -16,8 +16,8 @@ import (
 	"strings"
 
 	"github.com/pkg/sftp"
-	"github.com/vbauerster/mpb/v7"
-	"github.com/vbauerster/mpb/v7/decor"
+	"github.com/vbauerster/mpb/v8"
+	"github.com/vbauerster/mpb/v8/decor"
 	"golang.org/x/crypto/ssh"
 	// "golang.org/x/text/encoding/simplifiedchinese"
 )
@@ -523,11 +523,11 @@ func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string, p *mpb.Progres
 			// 检查远程文件是否存在并决定是否拷贝
 			if fileInfo, err := sftp.Stat(dstPath); err == nil {
 				if fileInfo.IsDir() {
-					logger.Debug("Destination is a directory, skipping copy:", dstPath)
+					logger.Error("Destination is a directory, skipping copy:", dstPath)
 					return err
 				} else {
 					// 如果目标已经存在且为文件，则不再拷贝
-					logger.Debug("File already exists on the remote server, skipping copy:", dstPath)
+					logger.Error("File already exists on the remote server, skipping copy:", dstPath)
 					return err
 				}
 			}

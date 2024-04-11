@@ -28,7 +28,7 @@ const (
 )
 
 var (
-	Version = "0.0.3"
+	Version = "0.0.5"
 )
 
 func main() {
@@ -87,6 +87,7 @@ Run auto deployment using your own playbook
 						err := job.Validate()
 						if err != nil {
 							logger.Error("|Error playbook:", profile, "|Error: ", err.Error())
+							fmt.Println(color.RedString("Error: "), err)
 						} else {
 							//执行任务
 							job.RunTask()

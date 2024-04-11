@@ -64,6 +64,7 @@ func (l Logger) Close() error {
 func (l Logger) println(caller string, logLevel Level, args []interface{}) {
 
 	a := make([]interface{}, 0, 10)
+	/*//终端颜色
 	b := 0
 	f := 32
 	h := 0
@@ -80,11 +81,12 @@ func (l Logger) println(caller string, logLevel Level, args []interface{}) {
 		b = 43
 		f = 31
 	}
-	a = append(a, fmt.Sprintf("%c[%d;%d;%dm%s%c[0m", 0x1B, h, b, f, logLevelFlags[logLevel], 0x1B))
-	// a = append(a, logLevelFlags[logLevel])
+	*/
+	//a = append(a, fmt.Sprintf("%c[%d;%d;%dm%s%c[0m", 0x1B, h, b, f, logLevelFlags[logLevel], 0x1B))
+	a = append(a, logLevelFlags[logLevel])
 	a = append(a, l.requestID)
-	a = append(a, fmt.Sprintf("%c[0;0;36m%s%c[0m", 0x1B, caller, 0x1B))
-	// a = append(a, caller)
+	//a = append(a, fmt.Sprintf("%c[0;0;36m%s%c[0m", 0x1B, caller, 0x1B))
+	a = append(a, caller)
 	a = append(a, args...)
 	// fmt.Println(l.logger)
 	l.logger.Println(a...)
@@ -134,7 +136,8 @@ func getCaller() string {
 var logger Logger
 
 func init() {
-	logger = new("", InfoLevel)
+	//日志输出路径,为空则输出到终端
+	logger = new("./adp.log", InfoLevel)
 }
 func New(path string, logLevel Level) Logger {
 	return new(path, logLevel)
