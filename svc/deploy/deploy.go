@@ -107,7 +107,7 @@ func (task *Job) RunTask() {
 	fmt.Println("Task ID: ", TaskID)
 	//创建进度条
 	p := mpb.New(mpb.WithWidth(80))
-	defer p.Wait()
+	//defer p.Wait()
 	// Create mpb progress instance
 	for _, host := range task.Hosts {
 		wg.Add(1)
@@ -193,7 +193,9 @@ func (task *Job) RunTask() {
 	}
 	wg.Wait()
 	close(jobChan)
-	// 打印汇总信息
+	//必须在此处关闭，不然并发时容易出现覆盖汇总信息的问题
+	p.Wait()
+	// 打印汇总信息,预留终端输出时间
 	time.Sleep(100 * time.Millisecond)
 	printSummary(deploytimes, deploystatus, sumtime)
 }
