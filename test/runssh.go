@@ -4,6 +4,8 @@ import (
 	"auto-deployment/logger"
 	"auto-deployment/svc/deploy"
 	"fmt"
+
+	"github.com/fatih/color"
 )
 
 var file = "test/test.yml"
@@ -29,6 +31,7 @@ func main() {
 		if err != nil {
 			//logger.Error("|Error playbook:", file, "|Error: ", err.Error())
 			logger.Error("Playbook: ", file, "|Error: ", err.Error())
+			fmt.Println(color.RedString("Error: "), err)
 		} else {
 			//执行任务
 			job.RunTask()

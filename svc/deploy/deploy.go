@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"auto-deployment/logger"
 	"auto-deployment/svc/shell"
 	"crypto/rand"
 	"fmt"
@@ -9,6 +10,8 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/vbauerster/mpb/v8"
+	"github.com/vbauerster/mpb/v8/decor"
 )
 
 const (
@@ -66,15 +69,16 @@ func (job *Job) TmpShell(uuid string, dir string) (string, error) {
 // 执行顺序：SCP远程拷贝文件 -> 执行CMD命令 -> 执行SHELL命令
 func (task *Job) RunTask() {
 	var wg sync.WaitGroup
-	var outputLock sync.Mutex
+	//var outputLock sync.Mutex
 	var timemutex sync.Mutex
+	var pdbmutex sync.Mutex
 	var tmpShell string
 	var errScp error
 	var errShell error
 	var errCmd error
 	var err error
 	// 初始task任务的spinner
-	taskSpinner := NewStepSpinner(&outputLock)
+	//taskSpinner := NewStepSpinner(&outputLock)
 
 	// 记录每个服务器发布&&部署消耗的时间
 	var (
@@ -101,12 +105,12 @@ func (task *Job) RunTask() {
 
 	InfoF(longLine, "Task: "+task.JobName)
 	fmt.Println("Task ID: ", TaskID)
-	//输出task执行动画
-	taskSpinner.Start(task.JobName)
-	defer taskSpinner.Stop()
+	//创建进度条
+	p := mpb.New(mpb.WithWidth(80))
+	defer p.Wait()
+	// Create mpb progress instance
 	for _, host := range task.Hosts {
 		wg.Add(1)
-
 		go func(host string) {
 			defer wg.Done()
 			jobChan <- host
@@ -116,55 +120,81 @@ func (task *Job) RunTask() {
 				User:     task.User,
 				Password: task.Password,
 			}
+
 			//scp文件到远程服务器指定目录
 			if task.SrcFile != "" {
 				if task.DestDir == "" {
 					task.DestDir = remoteTmpShellDir
 				}
-				//scpSpinner.Start(fmt.Sprint("[", host, "]", " SCP"))
-				errScp = shellRun.Scp(sshArgs, task.SrcFile, task.DestDir)
-				//scpSpinner.Stop()
+				var displayBar bool = true
+				errScp = shellRun.Scp(sshArgs, task.SrcFile, task.DestDir, p, displayBar)
 			}
 			//执行cmd命令
 			if task.Cmd != "" {
-				//cmdSpinner.Start(fmt.Sprint("[", host, "]", " CMD"))
+				pdbmutex.Lock()
+				bar := AddScriptBar(p, fmt.Sprint(host, " CMD Running: "))
+				pdbmutex.Unlock()
 				errCmd = shellRun.SshLoginAndRun(sshArgs, task.Cmd, []string{"", ""}, func(name, msg string) {
-					fmt.Printf("\n[[HOST]]>>[%s]:\n%s\n", name, msg)
+					//fmt.Printf("\n[[HOST CMD]]>>[%s]:\n%s\n", name, msg)
+					logger.INFO("[[HOST CMD]]>>[", name, "]:\n", msg, "\n")
 				})
+				pdbmutex.Lock()
+				bar.IncrBy(1)
+				bar.Wait()
+				pdbmutex.Unlock()
 				//cmdSpinner.Stop()
 			}
 			//执行shell命令
 			if tmpShell != "" {
-				//shellSpinner.Start(fmt.Sprint("[", host, "]", " SHELL"))
+				var displayBar bool = false
+				pdbmutex.Lock()
+				bar := AddScriptBar(p, fmt.Sprint(host, " SHELL Running: "))
+				pdbmutex.Unlock()
 				// scp临时脚本到目标服务器
-				shellRun.Scp(sshArgs, (TmpShellDir + "/" + tmpShell), remoteTmpShellDir)
+				shellRun.Scp(sshArgs, (TmpShellDir + "/" + tmpShell), remoteTmpShellDir, p, displayBar)
 				//shellRun.Scp(sshArgs, TmpShellDir, remoteTmpShellDir)
 				//切换远程临时脚本目录并执行临时脚本
 				errShell = shellRun.SshLoginAndRun(sshArgs, "cd "+remoteTmpShellDir+";bash", []string{"", tmpShell}, func(name, msg string) {
-					fmt.Printf("\n[[HOST]]>>[%s]:\n%s\n", name, msg)
+					//fmt.Printf("\n[[HOST SHELL]]>>[%s]:\n%s\n", name, msg)
+					logger.INFO("[[HOST SHELL]]>>[", name, "]:\n", msg, "\n")
 				})
+				pdbmutex.Lock()
+				bar.IncrBy(1)
+				bar.Wait()
+				pdbmutex.Unlock()
 				//shellSpinner.Stop()
 			}
 			//计算任务耗时,用互斥锁防止多个进程同时写入
 			timemutex.Lock()
 			deploytimes[host] = time.Since(startime)
 			sumtime += deploytimes[host]
-			timemutex.Unlock()
+			//timemutex.Unlock()
 			if err == nil && errShell == nil && errCmd == nil && errScp == nil {
-				timemutex.Lock()
+				//timemutex.Lock()
 				deploystatus[host] = "SUCCESS"
-				timemutex.Unlock()
+				//timemutex.Unlock()
 			} else {
-				timemutex.Lock()
+				//timemutex.Lock()
 				deploystatus[host] = "FAILED"
-				timemutex.Unlock()
+				if errScp != nil {
+					fmt.Println(errScp)
+				}
+				if errCmd != nil {
+					fmt.Println(errShell)
+				}
+				if errShell != nil {
+					fmt.Println(errCmd)
+				}
+				//timemutex.Unlock()
 			}
+			timemutex.Unlock()
 			<-jobChan
 		}(host)
 	}
 	wg.Wait()
 	close(jobChan)
 	// 打印汇总信息
+	time.Sleep(100 * time.Millisecond)
 	printSummary(deploytimes, deploystatus, sumtime)
 }
 
@@ -196,4 +226,20 @@ func printSummary(deploytimes map[string]time.Duration, deploystatus map[string]
 	InfoF("Total time: %f s", sumtime.Seconds())
 	InfoF("Finished at: %s", time.Now().Format("2006-01-02 15:04:05"))
 	Info(line)
+}
+
+// add run cmd or shell script pdb-bar
+func AddScriptBar(p *mpb.Progress, barInfo string) *mpb.Bar {
+	bar := p.New(1,
+		mpb.NopStyle(),
+		//mpb.BarFillerClearOnComplete(),
+		mpb.BarFillerOnComplete("Done"),
+		mpb.PrependDecorators(
+			decor.Name(barInfo),
+		),
+		mpb.AppendDecorators(
+			decor.Elapsed(decor.ET_STYLE_GO),
+		),
+	)
+	return bar
 }

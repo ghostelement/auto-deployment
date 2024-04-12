@@ -9,13 +9,15 @@ import (
 	"io/ioutil"
 	"path"
 	"path/filepath"
+	"sync"
 
 	"math/rand"
 	"os"
-
 	"strings"
 
 	"github.com/pkg/sftp"
+	"github.com/vbauerster/mpb/v8"
+	"github.com/vbauerster/mpb/v8/decor"
 	"golang.org/x/crypto/ssh"
 	// "golang.org/x/text/encoding/simplifiedchinese"
 )
@@ -178,9 +180,24 @@ func (ss ShellRun) SshLoginAndRun(sshArgs SshLoginArgs, cmd string, args []strin
 	return err
 }
 
-// sftp拷贝文件，保留源目录结构
-func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string) error {
+// test goroutine
+type ScpProgressLock struct {
+	mutex   sync.Mutex
+	bar     *mpb.Bar
+	proxied io.Reader
+}
+
+func (lock *ScpProgressLock) Read(p []byte) (n int, err error) {
+	n, err = lock.proxied.Read(p)
+	lock.mutex.Lock()
+	defer lock.mutex.Unlock()
+	lock.bar.IncrBy(n)
+	return n, err
+}
+
+func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string, p *mpb.Progress, displayBar bool) error {
 	logger.Debug("scp", src, dst)
+
 	err := ss.SshLogin(args, func(sshClient ssh.Client) {
 
 		sftp, err := sftp.NewClient(&sshClient)
@@ -190,7 +207,7 @@ func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string) error {
 		}
 
 		// sftp拷贝文件
-		scpFile := func(srcPath, dstPath string) {
+		scpFile := func(srcPath, dstPath string) error {
 			logger.Debug("scpFile", srcPath, dstPath)
 
 			// 创建目标路径的上级目录
@@ -198,41 +215,85 @@ func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string) error {
 			err = sftp.MkdirAll(dirName)
 			if err != nil {
 				logger.Error("sftp.MkdirAll error:", err)
-				return
+				return err
 			}
 			// 打开源文件并准备读取
 			sf, err := os.Open(srcPath)
 			if nil != err {
 				logger.Error("os.Open error:", err)
-				return
+				return err
 			}
 			defer sf.Close()
 
 			// 检查远程文件是否存在并决定是否拷贝
 			if fileInfo, err := sftp.Stat(dstPath); err == nil {
 				if fileInfo.IsDir() {
-					logger.Debug("Destination is a directory, skipping copy:", dstPath)
-					return
+					logger.Error("Destination is a directory, skipping copy:", dstPath)
+					return err
 				} else {
 					// 如果目标已经存在且为文件，则不再拷贝
-					logger.Debug("File already exists on the remote server, skipping copy:", dstPath)
-					return
+					logger.Error("File already exists on the remote server, skipping copy:", dstPath)
+					return err
 				}
 			}
 			//使用sftp创建目标文件
 			df, err := sftp.Create(dstPath)
 			if nil != err {
 				logger.Error("sftp.Create error:", err)
-				return
+				return err
 			}
-			defer df.Close()
+			//defer df.Close()
+			defer func() {
+				if err := df.Close(); err != nil {
+					logger.Error("df.Close error:", err)
+				}
+			}()
 
-			// 使用缓冲区提高拷贝效率
-			buf := make([]byte, 64*1024*1024)
-			_, err = io.CopyBuffer(df, sf, buf)
+			// Create progress bar
+			info, err := sf.Stat()
 			if err != nil {
-				logger.Error("io.CopyBuffer error:", err)
+				logger.Error("sf.Stat error:", err)
+				return err
 			}
+
+			//如果是拷贝文件则显示进度条，临时脚本则不显示
+			if displayBar == true {
+				totalBytes := info.Size()
+				bar := p.AddBar(
+					totalBytes,
+					mpb.PrependDecorators(
+						decor.Name(args.Host+" Copying "+srcPath+"> "),
+						decor.CountersKibiByte("% .1f / % .1f"),
+					),
+					mpb.AppendDecorators(
+						decor.Percentage(),
+						decor.EwmaETA(decor.ET_STYLE_GO, float64(totalBytes)),
+					),
+				)
+				// 使用互斥锁保护进度条更新
+				progressLock := &ScpProgressLock{
+					bar:     bar,
+					proxied: bar.ProxyReader(sf),
+				}
+				// 使用缓冲区提高拷贝效率
+				buf := make([]byte, 64*1024*1024)
+
+				_, err = io.CopyBuffer(df, progressLock, buf)
+				if err != nil && !errors.Is(err, io.EOF) {
+					logger.Error("io.CopyBuffer error:", err)
+					return err
+				}
+			} else {
+				// 使用缓冲区提高拷贝效率
+				buf := make([]byte, 64*1024*1024)
+				_, err = io.CopyBuffer(df, sf, buf)
+				if err != nil {
+					logger.Error("io.CopyBuffer error:", err)
+				}
+			}
+
+			//p.Wait()
+			return nil
 		}
 
 		//根据传入参数处理scp逻辑
@@ -245,10 +306,17 @@ func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string) error {
 				logger.Error("os.Stat error:", err)
 				return
 			}
+
 			// 如果是目录
 			if fi.IsDir() {
+				if err != nil {
+					fmt.Printf("Error getting dir size: %v\n", err)
+					return
+				}
+
 				// 遍历目录下的所有元素
 				files, err := ioutil.ReadDir(srcPath)
+
 				if err != nil {
 					logger.Error("ioutil.ReadDir error:", err)
 					return
@@ -266,6 +334,8 @@ func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string) error {
 						}
 						scp(srcChild, dstChild)
 					} else {
+						// 处理文件时更新进度条
+
 						// 对于文件，直接拷贝
 						scpFile(srcChild, dstChild)
 					}
@@ -278,5 +348,6 @@ func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string) error {
 		// 开始递归拷贝，初始目标路径为指定的目标目录
 		scp(src, dst)
 	})
+
 	return err
 }
