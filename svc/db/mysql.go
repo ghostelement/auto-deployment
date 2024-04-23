@@ -27,21 +27,23 @@ func (dbname *Database) connectToMySQL() (*sql.DB, error) {
 }
 
 // 连接mysql并执行sql
-func ConnMysqlAndRun(file string, dbname string) error {
+func ConnMysqlAndRun(dbInfo *Database) error {
 	//解析yaml
-	text, err := DbConfig(file)
-	if err != nil {
-		return err
-	}
-	// 获取db信息
-	dbInfo, err := text.GetDb(dbname)
-	if err != nil {
-		return err
-	}
-	fmt.Println(dbInfo)
+	/*
+		text, err := DbConfig(file)
+		if err != nil {
+			return err
+		}
+		// 获取db信息
+		dbInfo, err := text.GetDb(dbname)
+		if err != nil {
+			return err
+		}
+		fmt.Println(dbInfo)
+	*/
 	db, err := dbInfo.connectToMySQL()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer db.Close()
 	reader := bufio.NewReader(os.Stdin)
@@ -101,7 +103,7 @@ func executeUserInputSQL(db *sql.DB, reader *bufio.Reader) (bool, error) {
 				sql.WriteString(line)
 				// 检查sql是否为注释，如果是则清空
 				check := checkSql(sql.String())
-				if check == false {
+				if !check {
 					sql = strings.Builder{}
 				}
 				// 检查sql是否以分号结尾，如果是则执行
@@ -186,17 +188,4 @@ func executeSql(db *sql.DB, userInput string) error {
 		return fmt.Errorf("error during rows iteration: %w", err)
 	}
 	return nil
-}
-
-// 检查sql脚本，过滤掉注释
-func checkSql(sql string) bool {
-	check := true
-	if strings.HasPrefix(sql, "/*") && strings.HasSuffix(sql, "*/") {
-		check = false
-	}
-	if strings.HasPrefix(sql, "--") {
-		check = false
-	}
-
-	return check
 }
