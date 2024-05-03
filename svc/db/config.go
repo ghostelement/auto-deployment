@@ -67,9 +67,19 @@ func ConnetDb(file string, dbname string) error {
 		logger.Error("|Error playbook:", file, "|Error: ", err.Error())
 		return err
 	}
+
+	// TODO: add oracle sqlserver连接器
+	//根据数据库类型连接db，如果是sql类可以复用mysql函数，只需引入不同的驱动
 	switch dbInfo.Dbtype {
 	case "mysql":
-		return ConnMysqlAndRun(dbInfo)
+		datasource := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbInfo.User, dbInfo.Password, dbInfo.Host, dbInfo.Port, dbInfo.Database)
+		return ConnMysqlAndRun("mysql", datasource)
+	case "postgres":
+		datasource := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbInfo.User, dbInfo.Password, dbInfo.Host, dbInfo.Port, dbInfo.Database)
+		return ConnMysqlAndRun("postgres", datasource)
+	//case "oracle":
+	//	datasource := fmt.Sprintf("oracle://%s:%s@%s:%s/%s", dbInfo.User, dbInfo.Password, dbInfo.Host, dbInfo.Port, dbInfo.Database)
+	//	return ConnMysqlAndRun("oracle", datasource)
 	default:
 		return fmt.Errorf("db type %s not supported", dbInfo.Dbtype)
 	}

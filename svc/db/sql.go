@@ -8,12 +8,20 @@ import (
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+	//_ "github.com/sijms/go-ora/v2"
 )
 
 // 创建mysql连接
-func (dbname *Database) connectToMySQL() (*sql.DB, error) {
-	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbname.User, dbname.Password, dbname.Host, dbname.Port, dbname.Database)
-	dbconn, err := sql.Open("mysql", dataSourceName)
+func connectToMySQL(dbtype, datasource string) (*sql.DB, error) {
+	//if dbtype == "oracle" {
+	//	//err := os.Setenv("NLS_LANG", "AMERICAN_AMERICA.ZHS16GBK")
+	//	err := os.Setenv("NLS_LANG", "AMERICAN_AMERICA.AL32UTF8")
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//}
+	dbconn, err := sql.Open(dbtype, datasource)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}
@@ -27,27 +35,16 @@ func (dbname *Database) connectToMySQL() (*sql.DB, error) {
 }
 
 // 连接mysql并执行sql
-func ConnMysqlAndRun(dbInfo *Database) error {
-	//解析yaml
-	/*
-		text, err := DbConfig(file)
-		if err != nil {
-			return err
-		}
-		// 获取db信息
-		dbInfo, err := text.GetDb(dbname)
-		if err != nil {
-			return err
-		}
-		fmt.Println(dbInfo)
-	*/
-	db, err := dbInfo.connectToMySQL()
+func ConnMysqlAndRun(dbtype string, datasource string) error {
+	//创建mysql连接
+	db, err := connectToMySQL(dbtype, datasource)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
 	reader := bufio.NewReader(os.Stdin)
 
+	//获取用户输入的sql
 	for {
 		exit, err := executeUserInputSQL(db, reader)
 		if err != nil {

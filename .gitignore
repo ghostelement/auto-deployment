@@ -1,6 +1,7 @@
 # Binaries for programs and plugins
 auto-deployment
 adp
+.vscode/*
 test/*
 tmp/*
 *.exe
