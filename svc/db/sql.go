@@ -43,7 +43,6 @@ func ConnMysqlAndRun(dbtype string, datasource string) error {
 	}
 	defer db.Close()
 	reader := bufio.NewReader(os.Stdin)
-
 	//获取用户输入的sql
 	for {
 		exit, err := executeUserInputSQL(db, reader)
@@ -62,7 +61,8 @@ func ConnMysqlAndRun(dbtype string, datasource string) error {
 
 // 执行sql
 func executeUserInputSQL(db *sql.DB, reader *bufio.Reader) (bool, error) {
-	fmt.Print("Enter an SQL statement (or 'exit' to exit): ")
+	fmt.Println("Enter an SQL statement (or 'exit' to exit): ")
+	fmt.Print(">")
 	userInput, err := reader.ReadString(';')
 	// 去除输入的头部、尾部的空格及换行符
 	userInput = strings.TrimSpace(userInput)

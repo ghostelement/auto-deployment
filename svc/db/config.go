@@ -80,9 +80,17 @@ func ConnetDb(file string, dbname string) error {
 	//case "oracle":
 	//	datasource := fmt.Sprintf("oracle://%s:%s@%s:%s/%s", dbInfo.User, dbInfo.Password, dbInfo.Host, dbInfo.Port, dbInfo.Database)
 	//	return ConnMysqlAndRun("oracle", datasource)
+	case "redis":
+		c, err := dbInfo.OpenRedisConnection()
+		if err != nil {
+			fmt.Printf("connection failed:%v\n", err)
+			os.Exit(1)
+		}
+		dbInfo.InputReader(c)
 	default:
 		return fmt.Errorf("db type %s not supported", dbInfo.Dbtype)
 	}
+	return nil
 }
 
 // 检查sql脚本，过滤掉注释
@@ -115,9 +123,9 @@ func (c *Database) Validate() error {
 	if c.User == "" {
 		return errors.New("username can't be empty")
 	}
-	if c.Password == "" {
-		return errors.New("password and publicKey can't be empty at the same time")
-	}
+	//if c.Password == "" {
+	//	return errors.New("password and publicKey can't be empty at the same time")
+	//}
 
 	return nil
 }
