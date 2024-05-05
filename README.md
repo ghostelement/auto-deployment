@@ -108,7 +108,37 @@ adp run
 # or
 adp run /path/yourpath/playbook.yml
 ```
+#### db
+> Database Connection  
+`adp db dbname`Connects to the database using the playbook.yml file in the current directory.  
+`adp db dbname -f /path/your_playbook.yml`Connects to the database using a specified playbook file.  
+- Supported Database Types: mysql, postgresql, redis
 
+Database YAML Configuration Example:
+```yaml
+db:
+  - name: mysql
+    host: 192.168.223.5
+    port: 3306
+    dbtype: mysql
+    username: root
+    password: 'admin12345'
+    database: test
+  - name: postgresql
+    host: 192.168.223.5
+    port: 5432
+    dbtype: postgresql
+    username: postgres
+    password: 'admin12345'
+    database: test
+  - name: redis
+    host: 192.168.223.5
+    port: 6379
+    dbtype: redis
+    username: 'root'
+    password: 'admin12345'
+    database: 0
+```
 ### version
 > Check the version of the CLI tool
 
