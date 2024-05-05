@@ -159,6 +159,37 @@ job:
 `adp run`执行当前目录下的playbook.yml剧本任务  
 `adp run /path/your_playbook.yml`执行指定的剧本任务
 
+#### db
+> 连接数据库  
+`adp db dbname`使用当前目录下的playbook.yml文件连接数据库  
+`adp db dbname -f /path/your_playbook.yml`使用指定的剧本文件连接数据库  
+- 目前支持的数据库类型: mysql,postgresql,redis
+
+数据库yaml配置文件示例:
+```yaml
+db:
+  - name: mysql
+    host: 192.168.223.5
+    port: 3306
+    dbtype: mysql
+    username: root
+    password: 'admin12345'
+    database: test
+  - name: postgresql
+    host: 192.168.223.5
+    port: 5432
+    dbtype: postgresql
+    username: postgres
+    password: 'admin12345'
+    database: test
+  - name: redis
+    host: 192.168.223.5
+    port: 6379
+    dbtype: redis
+    username: 'root'
+    password: 'admin12345'
+    database: 0
+```
 #### version
 
 > 查看版本

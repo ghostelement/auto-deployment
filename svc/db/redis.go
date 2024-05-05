@@ -12,16 +12,6 @@ import (
 	"time"
 )
 
-//var defaultAddr = "127.0.0.1:6379"
-
-// Client redis client
-//type Client struct {
-//	Host     string
-//	Prot     string
-//	Db       string
-//	Password string
-//}
-
 type redisError string
 
 func (err redisError) Error() string { return "Redis Error: " + string(err) }
@@ -239,7 +229,7 @@ func subscribePattern(c net.Conn, s *bufio.Scanner) {
 	done := make(chan int)
 	command := make(chan []string)
 	reader := bufio.NewReader(c)
-	go commandScanner( s, reader, done, command)
+	go commandScanner(s, reader, done, command)
 	go commandWriter(c, command)
 	go commandReader(reader, subPatternTag)
 	<-done
