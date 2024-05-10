@@ -509,13 +509,13 @@ set_history(){
 if ! grep HISTTIMEFORMAT /etc/profile; then
 cat >> /etc/profile <<EOF
 #获取用户及IP
-USER=\$(who -u am i 2>/dev/null| awk '{print \$1 \$NF}') 
-if [ -z \$USER ]
+USERIP=\$(who -u am i 2>/dev/null| awk '{print \$1 \$NF}') 
+if [ -z \$USERIP ]
 then
-  USER=\$(hostname)
+  USERIP=\$(hostname)
 fi
 #新的history格式
-HISTTIMEFORMAT="%F %T \$USER "
+HISTTIMEFORMAT="%F %T \$USERIP "
 export HISTTIMEFORMAT
 export HISTSIZE=10000
 EOF
