@@ -414,7 +414,7 @@ centos_minimal_install(){
 
 ubuntu_minimal_install(){
     ${COLOR}'开始安装“Minimal安装建议安装软件包”,请稍等......'${END}
-    apt-get -y install iproute2 ntpdate tcpdump telnet traceroute nfs-kernel-server nfs-common lrzsz tree openssl libssl-dev libpcre3 libpcre3-dev zlib1g-dev gcc openssh-server iotop unzip zip nfs-common  lvm2 bash-completion chrony &> /dev/null
+    apt-get -y install iproute2 ntpdate tcpdump telnet traceroute nfs-kernel-server nfs-common lrzsz tree openssl libssl-dev libpcre3 libpcre3-dev zlib1g-dev gcc iotop unzip zip nfs-common  lvm2 bash-completion chrony &> /dev/null
     ${COLOR}"${OS_ID} ${OS_RELEASE} Minimal安装建议安装软件包已安装完成!"${END}
 }
 
