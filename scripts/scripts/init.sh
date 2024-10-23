@@ -1,8 +1,8 @@
-#!/usr/bin/bash
+#!/bin/bash
 #
 #***************************************************************************************************
 #Author:        Leon
-#Description:   reset for CentOS 6/7/8 & CentOS Stream 8/9 & Ubuntu 18.04/20.04/22.04 & Rocky 8/9 & Kylin 10
+#Description:   reset for CentOS 6/7/8 & CentOS Stream 8/9 & Ubuntu 18.04/20.04/22.04 & Rocky 8/9
 #Copyright (C): 2023 All rights reserved
 #Readme:  使用bash运行脚本，尤其注意在ubuntu系统下的运行方式，bash init.sh或者./init.sh
 #**************************************************************************************************
@@ -30,7 +30,7 @@ os(){
 }
 
 disable_selinux(){
-    if [ ${OS_ID} == "CentOS" -o ${OS_ID} == "Kylin"   -o ${OS_ID} == "Rocky" ];then
+    if [ ${OS_ID} == "CentOS" -o ${OS_ID} == "Kylin"   -o ${OS_ID} == "Rocky" -o ${OS_ID} == "UOS" -o ${OS_ID} == "openEuler" ];then
         if [ `getenforce` == "Enforcing" ];then
             sed -ri.bak 's/^(SELINUX=).*/\1disabled/' /etc/selinux/config
             ${COLOR}"${OS_ID} ${OS_RELEASE} SELinux已禁用,请重新启动系统后才能生效!"${END}
@@ -43,7 +43,7 @@ disable_selinux(){
 }
 
 disable_firewall(){
-    if [ ${OS_ID} == "CentOS" -o ${OS_ID} == "Kylin"   -o ${OS_ID} == "Rocky" ];then
+    if [ ${OS_ID} == "CentOS" -o ${OS_ID} == "Kylin"   -o ${OS_ID} == "Rocky" -o ${OS_ID} == "UOS" -o ${OS_ID} == "openEuler"  ];then
         rpm -q firewalld &> /dev/null && { systemctl disable --now firewalld &> /dev/null; ${COLOR}"${OS_ID} ${OS_RELEASE} Firewall防火墙已关闭!"${END}; } || { service iptables stop ; chkconfig iptables off; ${COLOR}"${OS_ID} ${OS_RELEASE} iptables防火墙已关闭!"${END}; }
     else
         dpkg -s ufw &> /dev/null && { systemctl disable --now ufw &> /dev/null; ${COLOR}"${OS_ID} ${OS_RELEASE} ufw防火墙已关闭!"${END}; } || ${COLOR}"${OS_ID} ${OS_RELEASE}  没有ufw防火墙服务,不用关闭！"${END}
@@ -51,7 +51,7 @@ disable_firewall(){
 }
 
 optimization_sshd(){
-    if [ ${OS_ID} == "CentOS" -o ${OS_ID} == "Kylin"   -o ${OS_ID} == "Rocky" ];then
+    if [ ${OS_ID} == "CentOS" -o ${OS_ID} == "Kylin"   -o ${OS_ID} == "Rocky" -o ${OS_ID} == "UOS" -o ${OS_ID} == "openEuler"  ];then
         sed -ri.bak -e 's/^#(UseDNS).*/\1 no/' -e 's/^(GSSAPIAuthentication).*/\1 no/' /etc/ssh/sshd_config
     else
         sed -ri.bak -e 's/^#(UseDNS).*/\1 no/' -e 's/^#(GSSAPIAuthentication).*/\1 no/' /etc/ssh/sshd_config
@@ -397,10 +397,16 @@ apt_menu(){
 }
 
 set_mirror_repository(){
-    if [ ${OS_ID} == "CentOS" -o ${OS_ID} == "Kylin"   ];then
+    if [ ${OS_ID} == "CentOS" ];then
         centos_menu
     elif [ ${OS_ID} == "Rocky" ];then
         rocky_menu
+    elif [ ${OS_ID} == "UOS" ];then
+        echo "UOS  skip repository"
+    elif [ ${OS_ID} == "openEuler" ];then
+        echo "openEuler  skip repository"
+    elif [ ${OS_ID} == "Kylin" ];then
+        echo "Kylin  skip repository"
     else
         apt_menu
     fi
@@ -419,7 +425,7 @@ ubuntu_minimal_install(){
 }
 
 minimal_install(){
-    if [ ${OS_ID} == "CentOS" -o ${OS_ID} == "Kylin"   -o ${OS_ID} == "Rocky" ] &> /dev/null;then
+    if [ ${OS_ID} == "CentOS" -o ${OS_ID} == "Kylin"   -o ${OS_ID} == "Rocky" -o ${OS_ID} == "UOS" -o ${OS_ID} == "openEuler"  ] &> /dev/null;then
         centos_minimal_install
     else
         ubuntu_minimal_install
