@@ -19,7 +19,7 @@ var rootCmd = &cobra.Command{
 e.g. This is a common way to perform deploy, according to playbook.yml in the current path.
 Thank's for your support. Please go to https://github.com/ghostelement/auto-deployment and give a star.`,
 	Example: "adp run playbook.yml",
-	Version: "0.0.6",
+	Version: "0.0.7",
 }
 
 // 添加一个名为 "version" 的标志（对应 `-v` 和 `--version`）
