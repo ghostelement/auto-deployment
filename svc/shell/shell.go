@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"path"
 	"path/filepath"
 	"sync"
@@ -42,7 +41,7 @@ func If(cond bool, a, b interface{}) interface{} {
 // 返回值表示读取过程中遇到的任何错误。
 func (ss ShellRun) ReadAsyncShellLog(reader io.Reader, handler func(string)) error {
 	var cache string = ""
-	buf := make([]byte, 8192, 8192)
+	buf := make([]byte, 8192)
 	for {
 		num, err := reader.Read(buf)
 		// logger.Debug("ReadAsyncShellLog:",num,err)
@@ -70,10 +69,9 @@ func (ss ShellRun) ReadAsyncShellLog(reader io.Reader, handler func(string)) err
 			cache = a[len(a)-1]
 		}
 	}
-	return nil
 }
 
-type SshLoginHandle func(client ssh.Client)
+type SshLoginHandle func(client *ssh.Client)
 type SshLoginArgs struct {
 	Host     string
 	Port     uint32
@@ -104,7 +102,7 @@ func (ss ShellRun) SshLogin(args SshLoginArgs, sshLoginHandle SshLoginHandle) er
 	defer sshClient.Close()
 
 	if sshLoginHandle != nil {
-		sshLoginHandle(*sshClient)
+		sshLoginHandle(sshClient)
 	}
 	return nil
 }
@@ -163,7 +161,7 @@ func (ss ShellRun) RunWithSshSession(host string, s ssh.Session, cmd string, arg
 func (ss ShellRun) SshLoginAndRun(sshArgs SshLoginArgs, cmd string, args []string, handler LogAsyncHandle) error {
 	r := rand.Intn(100) //TODO:后期需改为uuid 随机生成一个数字，用于日志标识
 	// 尝试通过sshArgs进行SSH登录，并在登录成功后执行相应的操作
-	err := ss.SshLogin(sshArgs, func(sshClient ssh.Client) {
+	err := ss.SshLogin(sshArgs, func(sshClient *ssh.Client) {
 
 		// logger.Debug("args:", sshArgs)
 		//创建ssh-session
@@ -198,9 +196,9 @@ func (lock *ScpProgressLock) Read(p []byte) (n int, err error) {
 func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string, p *mpb.Progress, displayBar bool) error {
 	logger.Debug("scp", src, dst)
 
-	err := ss.SshLogin(args, func(sshClient ssh.Client) {
+	err := ss.SshLogin(args, func(sshClient *ssh.Client) {
 
-		sftp, err := sftp.NewClient(&sshClient)
+		sftp, err := sftp.NewClient(sshClient)
 		if err != nil {
 			logger.Error("sftp.NewClient error:", err)
 			return
@@ -257,7 +255,7 @@ func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string, p *mpb.Progres
 			}
 
 			//如果是拷贝文件则显示进度条，临时脚本则不显示
-			if displayBar == true {
+			if displayBar {
 				totalBytes := info.Size()
 				bar := p.AddBar(
 					totalBytes,
@@ -309,18 +307,20 @@ func (ss ShellRun) Scp(args SshLoginArgs, src string, dst string, p *mpb.Progres
 
 			// 如果是目录
 			if fi.IsDir() {
+				// 遍历目录下的所有元素
+				files, err := os.ReadDir(srcPath)
 				if err != nil {
-					fmt.Printf("Error getting dir size: %v\n", err)
+					fmt.Printf("Error getting dir paht: %v\n", err)
 					return
 				}
 
 				// 遍历目录下的所有元素
-				files, err := ioutil.ReadDir(srcPath)
+				//files, err := ioutil.ReadDir(srcPath)
 
-				if err != nil {
-					logger.Error("ioutil.ReadDir error:", err)
-					return
-				}
+				//if err != nil {
+				//	logger.Error("ioutil.ReadDir error:", err)
+				//	return
+				//}
 				for _, file := range files {
 					srcChild := fmt.Sprintf("%s/%s", srcPath, file.Name())
 					dstChild := path.Join(dstBase, file.Name())

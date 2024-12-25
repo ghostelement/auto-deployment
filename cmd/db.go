@@ -26,7 +26,7 @@ var (
 				_, err := os.Stat(defConfigName)
 				if err != nil {
 					if os.IsNotExist(err) {
-						return fmt.Errorf(color.RedString("No have db names,please use db name to connetion"))
+						return fmt.Errorf("%s", color.RedString("No have db names,please use db name to connetion"))
 					}
 				}
 			} else {
@@ -37,7 +37,7 @@ var (
 			if file == "" {
 				file = "playbook.yml"
 			}
-			
+
 			err := db.ConnetDb(file, dbName)
 			if err != nil {
 				fmt.Println(err)

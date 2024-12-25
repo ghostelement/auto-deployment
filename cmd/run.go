@@ -26,7 +26,7 @@ var (
 				_, err := os.Stat(defConfigName)
 				if err != nil {
 					if os.IsNotExist(err) {
-						return fmt.Errorf(color.RedString("playbook.yml does not exist, please use 'deploy init' to initialize"))
+						return fmt.Errorf("%s",color.RedString("playbook.yml does not exist, please use 'deploy init' to initialize"))
 					}
 				}
 				profile = defConfigName

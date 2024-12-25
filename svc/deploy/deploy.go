@@ -104,7 +104,7 @@ func (task *Job) RunTask() {
 	}
 
 	InfoF(longLine, "Task: "+task.JobName)
-	fmt.Println("Task ID: ", TaskID)
+	InfoF(sortLine, "Task ID: "+TaskID)
 	//创建进度条
 	p := mpb.New(mpb.WithWidth(80))
 	//defer p.Wait()
@@ -154,7 +154,7 @@ func (task *Job) RunTask() {
 				shellRun.Scp(sshArgs, (TmpShellDir + "/" + tmpShell), remoteTmpShellDir, p, displayBar)
 				//shellRun.Scp(sshArgs, TmpShellDir, remoteTmpShellDir)
 				//切换远程临时脚本目录并执行临时脚本
-				errShell = shellRun.SshLoginAndRun(sshArgs, "cd "+remoteTmpShellDir+";bash", []string{"", tmpShell}, func(name, msg string) {
+				errShell = shellRun.SshLoginAndRun(sshArgs, "bash -c 'cd "+remoteTmpShellDir+" && bash "+tmpShell+"'", []string{"", tmpShell}, func(name, msg string) {
 					//fmt.Printf("\n[[HOST SHELL]]>>[%s]:\n%s\n", name, msg)
 					logger.INFO("[[HOST SHELL]]>>[", name, "]:\n", msg, "\n")
 				})
