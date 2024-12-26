@@ -81,11 +81,10 @@ func (task *Job) RunTask() {
 	//taskSpinner := NewStepSpinner(&outputLock)
 
 	// 记录每个服务器发布&&部署消耗的时间
-	var (
-		deploytimes  = make(map[string]time.Duration) // {"addr": time}
-		deploystatus = make(map[string]string)        // {"addr": SUCCESS}
-		sumtime      time.Duration
-	)
+	deploytimes := make(map[string]time.Duration) // {"addr": time}
+	deploystatus := make(map[string]string)       // {"addr": SUCCESS}
+	sumtime := time.Duration(0)
+
 	//创建5个channal控制并发数量
 	if task.ParallelNum == 0 {
 		task.ParallelNum = 5
@@ -133,6 +132,7 @@ func (task *Job) RunTask() {
 			if task.Cmd != "" {
 				pdbmutex.Lock()
 				bar := AddScriptBar(p, fmt.Sprint(host, " CMD Running: "))
+				//此处不能使用defer解锁，否则会阻塞
 				pdbmutex.Unlock()
 				errCmd = shellRun.SshLoginAndRun(sshArgs, task.Cmd, []string{"", ""}, func(name, msg string) {
 					//fmt.Printf("\n[[HOST CMD]]>>[%s]:\n%s\n", name, msg)
@@ -141,7 +141,7 @@ func (task *Job) RunTask() {
 				pdbmutex.Lock()
 				bar.IncrBy(1)
 				bar.Wait()
-				pdbmutex.Unlock()
+				defer pdbmutex.Unlock()
 				//cmdSpinner.Stop()
 			}
 			//执行shell命令
@@ -161,7 +161,7 @@ func (task *Job) RunTask() {
 				pdbmutex.Lock()
 				bar.IncrBy(1)
 				bar.Wait()
-				pdbmutex.Unlock()
+				defer pdbmutex.Unlock()
 				//shellSpinner.Stop()
 			}
 			//计算任务耗时,用互斥锁防止多个进程同时写入
@@ -187,7 +187,7 @@ func (task *Job) RunTask() {
 				}
 				//timemutex.Unlock()
 			}
-			timemutex.Unlock()
+			defer timemutex.Unlock()
 			<-jobChan
 		}(host)
 	}
