@@ -66,6 +66,7 @@ adp init -a
 ```
 `adp init /path/yourpath/`when followed by a path, is designed to initialize the configuration files for the CLI tool within the specified directory. This means that instead of creating the default playbook.yml and other related configuration files in the current working directory, it will create them in the directory you provide.  
 
+
 playbook.yml example：
 
 ```yaml
